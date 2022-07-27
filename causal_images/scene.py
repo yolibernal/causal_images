@@ -47,3 +47,6 @@ class Scene:
     ):
         reference_obj = self.objects[reference_obj_id].mesh
         target_obj = self.objects[target_obj_id].mesh
+
+    def cleanup(self):
+        bproc.object.delete_multiple([obj.mesh for obj in self.objects.values()])
