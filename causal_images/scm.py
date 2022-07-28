@@ -25,3 +25,10 @@ class SceneSCM:
             yield df_sample
 
             scene.cleanup()
+
+    def plot(self):
+        # Create new scene
+        scene = Scene()
+        # Create new SCM for scene
+        scm = SCM(self.functional_map_factory(scene))
+        return scm.plot()
