@@ -4,6 +4,7 @@ from typing import Dict, Union
 from uuid import uuid4 as uuid
 
 import blenderproc as bproc
+import numpy as np
 
 
 class PrimitiveShape(Enum):
@@ -80,7 +81,7 @@ class Scene:
         target_critical_pos = (min if reference_loc_smaller else max)(
             [loc[critical_dim] for loc in target_obj.get_bound_box()]
         )
-        target_obj.set_location(
+        target_pos = np.array(
             [
                 reference_critical_pos
                 + target_obj.get_location()[0]
@@ -99,6 +100,8 @@ class Scene:
                 else reference_pos[2],
             ]
         )
+        target_obj.set_location(target_pos)
+        return target_pos
 
     def cleanup(self):
         bproc.object.delete_multiple([obj.mesh for obj in self.objects.values()])
