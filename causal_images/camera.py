@@ -37,6 +37,8 @@ def sample_object_facing_camera_pose(
     fov_bounds=(np.pi / 6, np.pi / 6),
     camera_zoom_bounds=(1, 1),
     camera_rotation_bounds=(0, 0),
+    camera_elevation_bounds=(-1, 1),
+    camera_azimuth_bounds=(-1, 1),
 ):
     bounding_sphere_center, bounding_sphere_radius = get_bounding_sphere(objects)
 
@@ -53,6 +55,10 @@ def sample_object_facing_camera_pose(
         center=bounding_sphere_center,
         radius_min=d * camera_zoom_bounds[0],
         radius_max=d * camera_zoom_bounds[1],
+        elevation_min=camera_elevation_bounds[0],
+        elevation_max=camera_elevation_bounds[1],
+        azimuth_min=camera_azimuth_bounds[0],
+        azimuth_max=camera_azimuth_bounds[1],
     )
     rotation_matrix = bproc.camera.rotation_from_forward_vec(
         bounding_sphere_center - location,
