@@ -8,13 +8,22 @@ from scmodels import SCM
 from causal_images.scene import Scene
 
 
+class SceneInterventions:
+    def __init__(
+        self, functional_map_factory: Callable[[Scene, np.random.Generator], dict]
+    ):
+        self.functional_map_factory = functional_map_factory
+
+
 class SceneSCM:
     def __init__(
         self, functional_map_factory: Callable[[Scene, np.random.Generator], dict]
     ):
         self.functional_map_factory = functional_map_factory
 
-    def sample(self, n, rng=np.random.default_rng()):
+    def sample(
+        self, n, interventions: SceneInterventions = None, rng=np.random.default_rng()
+    ):
         for i in range(n):
             bproc.utility.reset_keyframes()
 
@@ -22,6 +31,8 @@ class SceneSCM:
             scene = Scene()
             # Create new SCM for scene
             scm = SCM(self.functional_map_factory(scene, rng), seed=rng)
+            if interventions is not None:
+                scm.intervention(interventions.functional_map_factory(scene, rng))
             df_sample = scm.sample(1)
 
             df_sample["_scene"] = [scene]

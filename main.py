@@ -12,7 +12,7 @@ import dill as pickle
 import numpy as np
 
 from causal_images.camera import sample_object_facing_camera_pose
-from causal_images.scm import SceneSCM
+from causal_images.scm import SceneInterventions, SceneSCM
 from causal_images.util import resolve_object_shapes
 
 # Argument parsing
@@ -22,6 +22,11 @@ parser.add_argument("--output_dir", help="Output directory", required=True)
 parser.add_argument(
     "--scm_path",
     help="Path to Structural Causal Model (SCM) Python file. Should declare instance of causal_images.scm.SceneSCM as `scm`.",
+    required=True,
+)
+parser.add_argument(
+    "--interventions_path",
+    help="Path to Intervention Python file.",
     required=True,
 )
 
@@ -147,13 +152,18 @@ def save_outputs(output_dir, run_name, img_data, df_objects, model, scm_path):
 scm = load_module_from_file(args.scm_path, "scm")
 model: SceneSCM = scm.scm
 
+interventions = load_module_from_file(args.interventions_path, "interventions")
+model_interventions: SceneInterventions = interventions.interventions
+
 light = bproc.types.Light()
 light.set_location(args.light_position)
 light.set_energy(args.light_energy)
 
 rng = np.random.default_rng(seed=args.seed)
 
-for i, df_scene in enumerate(model.sample(args.scene_num_samples, rng=rng)):
+for i, df_scene in enumerate(
+    model.sample(args.scene_num_samples, interventions=model_interventions, rng=rng)
+):
     df_objects = resolve_object_shapes(df_scene)
 
     objects = [obj.mesh for obj in df_objects.iloc[0]._scene.objects.values()]
