@@ -26,6 +26,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--seed",
+    help="Seed for initializing random generator.",
+    type=int,
+)
+
+parser.add_argument(
     "--scene_num_samples",
     default=5,
     type=int,
@@ -145,8 +151,9 @@ light = bproc.types.Light()
 light.set_location(args.light_position)
 light.set_energy(args.light_energy)
 
+rng = np.random.default_rng(seed=args.seed)
 
-for i, df_scene in enumerate(model.sample(args.scene_num_samples)):
+for i, df_scene in enumerate(model.sample(args.scene_num_samples, rng=rng)):
     df_objects = resolve_object_shapes(df_scene)
 
     objects = [obj.mesh for obj in df_objects.iloc[0]._scene.objects.values()]
