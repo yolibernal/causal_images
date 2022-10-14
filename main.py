@@ -13,6 +13,7 @@ import dill as pickle
 import numpy as np
 
 from causal_images.camera import sample_object_facing_camera_pose
+from causal_images.scene import PrimitiveShape
 from causal_images.scm import SceneInterventions, SceneManipulations, SceneSCM
 from causal_images.util import resolve_object_shapes
 
@@ -100,23 +101,45 @@ def save_outputs(
     fig.savefig(os.path.join(output_dir, str(run_name), "scm.png"), dpi=fig.dpi)
 
 
+def create_deterministic_node_callable(scene, node_name: str, node_value):
+    if node_name.startswith("obj_"):
+        return (
+            [],
+            lambda: scene.create_primitive(PrimitiveShape(node_value)),
+            None,
+        )
+    elif node_name.startswith("pos_"):
+        return (
+            [node_name.replace("pos_", "obj_")],
+            lambda obj_parent: scene.set_object_position(obj_parent, node_value),
+            None,
+        )
+    else:
+        return ([], lambda: node_value, None)
+
+
+model = None
+model_interventions = None
+model_manipulations = None
 if "scm" in scene_conf:
-    raise NotImplementedError("SCM config not yet supported.")
+    model = SceneSCM(
+        lambda scene, rng: {
+            node_name: create_deterministic_node_callable(scene, node_name, node_value)
+            for node_name, node_value in scene_conf["scm"].items()
+        }
+    )
 elif "scm" in scene_sampling_conf:
     scm_conf = scene_sampling_conf["scm"]
-    model = None
-    if scm_conf["scm_path"] is not None:
-        scm = load_module_from_file(scm_conf["scm_path"], "scm")
-        model: SceneSCM = scm.scm
 
-    model_interventions = None
+    scm = load_module_from_file(scm_conf["scm_path"], "scm")
+    model: SceneSCM = scm.scm
+
     if scm_conf["interventions_path"] is not None:
         interventions = load_module_from_file(
             scm_conf["interventions_path"], "interventions"
         )
         model_interventions: SceneInterventions = interventions.interventions
 
-    model_manipulations = None
     if scm_conf["manipulations_path"] is not None:
         manipulations = load_module_from_file(
             scm_conf["manipulations_path"], "manipulations"
