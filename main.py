@@ -4,12 +4,15 @@ bproc.init()
 
 import argparse
 import importlib
+import json
 import os
 import shutil
 import sys
+from dataclasses import asdict, dataclass
 
 import dill as pickle
 import numpy as np
+import pandas as pd
 
 from causal_images.camera import sample_object_facing_camera_pose
 from causal_images.scm import SceneInterventions, SceneManipulations, SceneSCM
@@ -127,6 +130,13 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+
+@dataclass
+class LightConfig:
+    position: np.ndarray
+    energy: float
+
+
 # https://stackoverflow.com/a/67692
 def load_module_from_file(path, module_name):
     spec = importlib.util.spec_from_file_location(module_name, path)
@@ -136,18 +146,48 @@ def load_module_from_file(path, module_name):
     return module
 
 
-def save_outputs(output_dir, run_name, img_data, df_objects, model, scm_path):
+def save_outputs(
+    output_dir,
+    run_name,
+    img_data,
+    df_objects,
+    model,
+    scm_path,
+    interventions_path,
+    manipulations_path,
+    camera_poses: np.ndarray,
+    light_config,
+):
     # Save rendered image
     bproc.writer.write_hdf5(os.path.join(output_dir, str(run_name)), img_data)
     # Save sampled values
     df_objects.drop(columns=["_scene"]).to_csv(
-        os.path.join(output_dir, str(run_name), "sample.csv"), index=False
+        os.path.join(output_dir, str(run_name), "result.csv"), index=False
     )
     # Save SCM Python definition
     shutil.copyfile(scm_path, os.path.join(output_dir, str(run_name), "scm.py"))
+    if interventions_path is not None:
+        shutil.copyfile(
+            interventions_path,
+            os.path.join(output_dir, str(run_name), "interventions.py"),
+        )
+    if manipulations_path is not None:
+        shutil.copyfile(
+            manipulations_path,
+            os.path.join(output_dir, str(run_name), "manipulations.py"),
+        )
+    # Save camera poses
+    for i, camera_pose in enumerate(camera_poses):
+        np.savetxt(
+            os.path.join(output_dir, str(run_name), f"{i}_camera_pose.txt"), camera_pose
+        )
     # Save pickle of model
     with open(os.path.join(output_dir, str(run_name), "model.pkl"), "wb") as f:
         pickle.dump(model, f)
+
+    with open(os.path.join(output_dir, str(run_name), "light_config.json"), "w") as f:
+        json.dump(asdict(light_config), f)
+
     # Save SCM plot
     fig, ax = model.plot()
     fig.savefig(os.path.join(output_dir, str(run_name), "scm.png"), dpi=fig.dpi)
@@ -166,9 +206,10 @@ if args.manipulations_path:
     manipulations = load_module_from_file(args.manipulations_path, "manipulations")
     model_manipulations: SceneManipulations = manipulations.manipulations
 
+light_config = LightConfig(position=args.light_position, energy=args.light_energy)
 light = bproc.types.Light()
-light.set_location(args.light_position)
-light.set_energy(args.light_energy)
+light.set_location(light_config.position)
+light.set_energy(light_config.energy)
 
 rng = np.random.default_rng(seed=args.seed)
 
@@ -193,7 +234,9 @@ for i, df_scene in enumerate(
     df_objects = resolve_object_shapes(df_scene)
 
     objects = [obj.mesh for obj in df_objects.iloc[0]._scene.objects.values()]
-    for _ in range(args.camera_num_samples):
+
+    camera_poses = np.zeros((args.camera_num_samples, 4, 4))
+    for j in range(args.camera_num_samples):
         cam2world_matrix = sample_object_facing_camera_pose(
             objects,
             fov_bounds=(args.camera_fov_lower, args.camera_fov_upper),
@@ -211,6 +254,7 @@ for i, df_scene in enumerate(
                 args.camera_azimuth_upper,
             ),
         )
+        camera_poses[j] = cam2world_matrix
         camera = bproc.camera.add_camera_pose(cam2world_matrix)
 
     data = bproc.renderer.render()
@@ -221,4 +265,8 @@ for i, df_scene in enumerate(
         df_objects=df_objects,
         model=model,
         scm_path=args.scm_path,
+        interventions_path=args.interventions_path,
+        manipulations_path=args.manipulations_path,
+        camera_poses=camera_poses,
+        light_config=light_config,
     )

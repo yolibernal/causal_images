@@ -44,6 +44,8 @@ def sample_object_facing_camera_pose(
 
     r = bounding_sphere_radius
     fov = np.random.uniform(fov_bounds[0], fov_bounds[1])
+
+    # Distance to make bounding sphere fit into fov
     d = r / np.sin(fov / 2)
 
     bproc.camera.set_intrinsics_from_blender_params(
