@@ -7,7 +7,7 @@ import blenderproc as bproc
 import numpy as np
 
 
-class PrimitiveShape(Enum):
+class PrimitiveShape(str, Enum):
     CUBE = "CUBE"
     CYLINDER = "CYLINDER"
     CONE = "CONE"
@@ -16,7 +16,7 @@ class PrimitiveShape(Enum):
     MONKEY = "MONKEY"
 
 
-class RelativePosition(Enum):
+class RelativePosition(str, Enum):
     FRONT = "FRONT"
     BEHIND = "BEHIND"
     LEFT = "LEFT"

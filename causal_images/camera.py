@@ -64,9 +64,9 @@ def sample_object_facing_camera_pose(
     )
     rotation_matrix = bproc.camera.rotation_from_forward_vec(
         bounding_sphere_center - location,
-        inplane_rot=np.random.uniform(
-            camera_rotation_bounds[0] * np.pi, camera_rotation_bounds[1] * np.pi
-        ),
+        # inplane_rot=np.random.uniform(
+        #     camera_rotation_bounds[0] * np.pi, camera_rotation_bounds[1] * np.pi
+        # ),
     )
     # Add homog cam pose based on location an rotation
     cam2world_matrix = bproc.math.build_transformation_mat(location, rotation_matrix)
