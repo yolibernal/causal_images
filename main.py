@@ -12,7 +12,7 @@ import dill as pickle
 import numpy as np
 
 from causal_images.camera import sample_object_facing_camera_pose
-from causal_images.scm import SceneInterventions, SceneSCM
+from causal_images.scm import SceneInterventions, SceneManipulations, SceneSCM
 from causal_images.util import resolve_object_shapes
 
 # Argument parsing
@@ -26,8 +26,12 @@ parser.add_argument(
 )
 parser.add_argument(
     "--interventions_path",
-    help="Path to Intervention Python file.",
-    required=True,
+    help="Path to Intervention Python file. Should declare instance of causal_images.scm.SceneInterventions as `interventions`.",
+)
+
+parser.add_argument(
+    "--manipulations_path",
+    help="Path to Manipulations Python file. Should declare instance of causal_images.scm.SceneManipulations as `manipulations`.",
 )
 
 parser.add_argument(
@@ -152,8 +156,15 @@ def save_outputs(output_dir, run_name, img_data, df_objects, model, scm_path):
 scm = load_module_from_file(args.scm_path, "scm")
 model: SceneSCM = scm.scm
 
-interventions = load_module_from_file(args.interventions_path, "interventions")
-model_interventions: SceneInterventions = interventions.interventions
+model_interventions = None
+if args.interventions_path:
+    interventions = load_module_from_file(args.interventions_path, "interventions")
+    model_interventions: SceneInterventions = interventions.interventions
+
+model_manipulations = None
+if args.manipulations_path:
+    manipulations = load_module_from_file(args.manipulations_path, "manipulations")
+    model_manipulations: SceneManipulations = manipulations.manipulations
 
 light = bproc.types.Light()
 light.set_location(args.light_position)
@@ -162,8 +173,23 @@ light.set_energy(args.light_energy)
 rng = np.random.default_rng(seed=args.seed)
 
 for i, df_scene in enumerate(
-    model.sample(args.scene_num_samples, interventions=model_interventions, rng=rng)
+    model.sample(
+        args.scene_num_samples,
+        interventions=model_interventions,
+        rng=rng,
+    )
 ):
+    scene = df_scene.iloc[0]["_scene"]
+
+    # Execute manipulations
+    for node_name, manipulation_callable in model_manipulations.functional_map_factory(
+        scene, rng
+    ).items():
+        node_value = df_scene.iloc[0][node_name]
+        scene_node_values = df_scene.iloc[0]
+        node_value_new = manipulation_callable(node_value, scene_node_values)
+        df_scene.iloc[0][node_name] = node_value_new
+
     df_objects = resolve_object_shapes(df_scene)
 
     objects = [obj.mesh for obj in df_objects.iloc[0]._scene.objects.values()]

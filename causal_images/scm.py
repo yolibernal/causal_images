@@ -15,6 +15,14 @@ class SceneInterventions:
         self.functional_map_factory = functional_map_factory
 
 
+class SceneManipulations:
+    def __init__(
+        self,
+        functional_map_factory: Callable[[Scene, np.random.Generator], dict],
+    ):
+        self.functional_map_factory = functional_map_factory
+
+
 class SceneSCM:
     def __init__(
         self, functional_map_factory: Callable[[Scene, np.random.Generator], dict]
@@ -22,7 +30,10 @@ class SceneSCM:
         self.functional_map_factory = functional_map_factory
 
     def sample(
-        self, n, interventions: SceneInterventions = None, rng=np.random.default_rng()
+        self,
+        n,
+        interventions: SceneInterventions = None,
+        rng=np.random.default_rng(),
     ):
         for i in range(n):
             bproc.utility.reset_keyframes()

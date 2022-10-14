@@ -2,6 +2,7 @@ import pandas as pd
 
 
 def resolve_sample_object_shapes(x: pd.Series):
+    """Resolve the object ID to the actual object shape name."""
     row = x.copy()
     scene = row._scene
 

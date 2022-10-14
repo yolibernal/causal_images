@@ -103,5 +103,14 @@ class Scene:
         target_obj.set_location(target_pos)
         return target_pos
 
+    def replace_object(self, obj_id, shape):
+        position_obj_old = self.objects[obj_id].mesh.get_location()
+        self.objects[obj_id].mesh.delete()
+
+        obj = bproc.object.create_primitive(shape.value)
+        obj.set_location(position_obj_old)
+        self.objects[obj_id] = ObjectInfo(mesh=obj, shape=shape)
+        return obj_id
+
     def cleanup(self):
         bproc.object.delete_multiple([obj.mesh for obj in self.objects.values()])
