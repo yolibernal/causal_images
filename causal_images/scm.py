@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 from scmodels import SCM
 
-from causal_images.scene import Scene
-from causal_images.util import resolve_object_shapes
+from causal_images.scene import PrimitiveShape, Scene
 
 
 class SceneInterventions:
@@ -34,6 +33,16 @@ class SceneSCM:
         self.functional_map_factory = functional_map_factory
         self.interventions = interventions
         self.manipulations = manipulations
+
+    @classmethod
+    def from_scene_config(cls, scene_conf):
+        functional_map_factory = lambda scene, rng: {
+            node_name: cls._create_deterministic_node_callable(
+                scene, node_name, node_value
+            )
+            for node_name, node_value in scene_conf["scm"].items()
+        }
+        return cls(functional_map_factory)
 
     def sample_and_populate_scene(
         self,
@@ -83,7 +92,7 @@ class SceneSCM:
                         )
                         scene_outcomes[node_name] = new_node_value
 
-            df_objects = resolve_object_shapes(df_sample)
+            df_objects = self._resolve_object_shapes(df_sample)
 
             yield df_objects
 
@@ -95,3 +104,34 @@ class SceneSCM:
         # Create new SCM for scene
         scm = SCM(self.functional_map_factory(scene, rng))
         return scm.plot()
+
+    def _create_deterministic_node_callable(self, scene, node_name: str, node_value):
+        """Create a callable that returns a constant node value."""
+        if node_name.startswith("obj_"):
+            return (
+                [],
+                lambda: scene.create_primitive(PrimitiveShape(node_value)),
+                None,
+            )
+        elif node_name.startswith("pos_"):
+            return (
+                [node_name.replace("pos_", "obj_")],
+                lambda obj_parent: scene.set_object_position(obj_parent, node_value),
+                None,
+            )
+        else:
+            return ([], lambda: node_value, None)
+
+    def _resolve_sample_object_shapes(self, x: pd.Series):
+        """Resolve the object ID to the actual object shape name."""
+        row = x.copy()
+        scene = row._scene
+
+        for node_name, data in row.iteritems():
+            if str(node_name).startswith("obj_"):
+                obj_id = data
+                row[node_name] = scene.objects[obj_id].shape
+        return row
+
+    def _resolve_object_shapes(self, df: pd.DataFrame):
+        return df.apply(self._resolve_sample_object_shapes, axis=1)

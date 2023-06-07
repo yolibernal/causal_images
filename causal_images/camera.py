@@ -6,7 +6,7 @@ import numpy as np
 
 # https://b3d.interplanety.org/en/how-to-calculate-the-bounding-sphere-for-selected-objects/
 def get_bounding_sphere(objects: List[bproc.types.MeshObject]):
-    # return the bounding sphere center and radius for objects (in global coordinates)
+    """Calculates the bounding sphere center and radius for objects."""
     if not isinstance(objects, list):
         objects = [objects]
     points_co_global = []
@@ -31,15 +31,14 @@ def get_bounding_sphere(objects: List[bproc.types.MeshObject]):
 
 
 def sample_object_facing_camera_pose(
-    objects: List[
-        bproc.types.MeshObject,
-    ],
+    objects: List[bproc.types.MeshObject,],
     fov_bounds=(np.pi / 6, np.pi / 6),
     camera_zoom_bounds=(1, 1),
     camera_rotation_bounds=(0, 0),
     camera_elevation_bounds=(-1, 1),
     camera_azimuth_bounds=(-1, 1),
 ):
+    """Sample a camera pose that faces the objects and ensures that all objects are completely in view."""
     bounding_sphere_center, bounding_sphere_radius = get_bounding_sphere(objects)
 
     r = bounding_sphere_radius
