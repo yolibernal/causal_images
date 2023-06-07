@@ -8,7 +8,10 @@ Using [BlenderProc](https://github.com/DLR-RM/BlenderProc) to create training im
 
 Sample from the SCM and render:
 
-`blenderproc run main.py --output_dir ./output --scm_path ./examples/scm.py --scene_num_samples 1 --camera_num_samples 1 --camera_azimuth_lower 50 --camera_azimuth_upper 180 --camera_elevation_lower 20 --camera_elevation_upper 60 --light_position 0 0 10 --light_energy 5000`
+`blenderproc run main.py --output_dir <OUTPUT_DIR> --scene_sampling_config_path scene_sampling_config.json`
+
+Render images from existing scenes:
+`blenderproc run main.py --output_dir <OUTPUT_DIR> --scene_config_path scene_config.json`
 
 ### Visualize
 
