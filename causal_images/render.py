@@ -59,7 +59,7 @@ def create_camera_poses(scene_conf, scene_sampling_conf, objects=None):
 
 def load_model(scene_conf, scene_sampling_conf):
     if "scm" in scene_conf:
-        model = SceneSCM.from_scene_config(scene_conf)
+        model = SceneSCM.from_scm_outcomes(scene_conf["scm_outcomes"])
     elif "scm" in scene_sampling_conf:
         scm_conf = scene_sampling_conf["scm"]
 
