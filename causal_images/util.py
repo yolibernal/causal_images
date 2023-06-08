@@ -73,7 +73,7 @@ def save_outputs(
         ) as f:
             json.dump(scene_sampling_conf, f, cls=NumpyEncoder)
 
-        if scene_sampling_conf["scm"] is not None:
+        if "scm" in scene_sampling_conf:
             scm_conf = scene_sampling_conf["scm"]
 
             if scm_conf["scm_path"] is not None:

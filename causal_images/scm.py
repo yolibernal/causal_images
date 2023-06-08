@@ -39,7 +39,7 @@ class SceneSCM:
         """Create a SceneSCM from deterministic outcomes."""
         functional_map_factory = lambda scene, rng: {
             node_name: cls._create_deterministic_node_callable(
-                scene, node_name, node_value
+                cls, scene, node_name, node_value
             )
             for node_name, node_value in scm_outcomes.items()
         }

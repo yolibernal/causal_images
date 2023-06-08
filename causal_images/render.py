@@ -58,7 +58,7 @@ def create_camera_poses(scene_conf, scene_sampling_conf, objects=None):
 
 
 def load_model(scene_conf, scene_sampling_conf):
-    if "scm" in scene_conf:
+    if "scm_outcomes" in scene_conf:
         model = SceneSCM.from_scm_outcomes(scene_conf["scm_outcomes"])
     elif "scm" in scene_sampling_conf:
         scm_conf = scene_sampling_conf["scm"]
@@ -85,6 +85,15 @@ def load_model(scene_conf, scene_sampling_conf):
 
 
 def render_scenes(args, scene_conf, scene_sampling_conf):
+    if scene_conf is None and scene_sampling_conf is None:
+        raise ValueError(
+            "Either scene_config_path or scene_sampling_config_path must be specified."
+        )
+    if scene_conf is None:
+        scene_conf = {}
+    if scene_sampling_conf is None:
+        scene_sampling_conf = {}
+
     scene_result = {}
 
     rng = np.random.default_rng(seed=args.seed)

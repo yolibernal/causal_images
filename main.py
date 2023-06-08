@@ -40,7 +40,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-scene_conf = {}
+scene_conf = None
 if args.scene_config_path is not None:
     with open(args.scene_config_path) as f:
         scene_conf = json.load(f)
