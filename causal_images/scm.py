@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Dict, Sequence
 
 import blenderproc as bproc
 import numpy as np
@@ -29,10 +29,12 @@ class SceneSCM:
         functional_map_factory: Callable[[Scene, np.random.Generator], dict],
         interventions: SceneInterventions = None,
         manipulations: SceneManipulations = None,
+        fixed_noise_values: Dict[str, Sequence[float]] = None,
     ):
         self.functional_map_factory = functional_map_factory
         self.interventions = interventions
         self.manipulations = manipulations
+        self.fixed_noise_values = fixed_noise_values
 
     @classmethod
     def from_scm_outcomes(cls, scm_outcomes):
@@ -50,6 +52,7 @@ class SceneSCM:
         n,
         interventions: SceneInterventions = None,
         manipulations: SceneManipulations = None,
+        fixed_noise_values: Dict[str, Sequence[float]] = None,
         rng=np.random.default_rng(),
     ):
         if interventions is None:
@@ -57,6 +60,9 @@ class SceneSCM:
 
         if manipulations is None:
             manipulations = self.manipulations
+
+        if fixed_noise_values is None:
+            fixed_noise_values = self.fixed_noise_values
 
         for i in range(n):
             bproc.utility.reset_keyframes()
@@ -67,7 +73,7 @@ class SceneSCM:
             scm = SCM(self.functional_map_factory(scene, rng), seed=rng)
             if interventions is not None:
                 scm.intervention(interventions.functional_map_factory(scene, rng))
-            df_sample = scm.sample(1)
+            df_sample = scm.sample(1, fixed_noise_values=fixed_noise_values)
 
             df_sample["_scene"] = [scene]
 
@@ -129,7 +135,7 @@ class SceneSCM:
         scene = row._scene
 
         for node_name, data in row.iteritems():
-            if str(node_name).startswith("obj_"):
+            if str(node_name).startswith("obj_") and "__noise__" not in node_name:
                 obj_id = data
                 row[node_name] = scene.objects[obj_id].shape
         return row

@@ -58,8 +58,8 @@ def save_outputs(
         json.dump(scene_result, f, cls=NumpyEncoder)
 
     # Save SCM plot
-    fig, ax = model.plot()
-    fig.savefig(os.path.join(output_dir, str(run_name), "scm.png"), dpi=fig.dpi)
+    # fig, ax = model.plot()
+    # fig.savefig(os.path.join(output_dir, str(run_name), "scm.png"), dpi=fig.dpi)
 
     if scene_conf is not None:
         with open(
@@ -93,4 +93,9 @@ def save_outputs(
                     run_name,
                     scm_conf["manipulations_path"],
                     "manipulations",
+                )
+            if scm_conf["fixed_noise_path"] is not None:
+                shutil.copyfile(
+                    scm_conf["fixed_noise_path"],
+                    os.path.join(output_dir, run_name, "fixed_noise.json"),
                 )

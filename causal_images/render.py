@@ -1,3 +1,5 @@
+import json
+
 import blenderproc as bproc
 import numpy as np
 
@@ -79,6 +81,11 @@ def load_model(scene_conf, scene_sampling_conf):
             )
             model_manipulations: SceneManipulations = manipulations.manipulations
             model.manipulations = model_manipulations
+
+        if scm_conf["fixed_noise_path"] is not None:
+            with open(scm_conf["fixed_noise_path"]) as f:
+                fixed_noise_values = json.load(f)
+            model.fixed_noise_values = fixed_noise_values
     else:
         raise ValueError("SCM config not specified.")
     return model
