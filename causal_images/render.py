@@ -5,7 +5,7 @@ import numpy as np
 
 from causal_images.camera import sample_object_facing_camera_pose
 from causal_images.scm import SceneInterventions, SceneManipulations, SceneSCM
-from causal_images.util import load_module_from_file, save_outputs
+from causal_images.util import load_module_from_file, save_run_config, save_run_outputs
 
 
 def create_light(scene_conf, scene_sampling_conf, rng=np.random.default_rng()):
@@ -128,12 +128,15 @@ def render_scenes(args, scene_conf, scene_sampling_conf):
             "position": light_position,
             "energy": light_energy,
         }
-        save_outputs(
+        save_run_outputs(
             output_dir=args.output_dir,
             run_name=i,
             img_data=data,
-            model=model,
             scene_result=scene_result,
-            scene_conf=scene_conf,
-            scene_sampling_conf=scene_sampling_conf,
         )
+    save_run_config(
+        output_dir=args.output_dir,
+        model=model,
+        scene_conf=scene_conf,
+        scene_sampling_conf=scene_sampling_conf,
+    )
