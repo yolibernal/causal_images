@@ -91,7 +91,9 @@ def load_model(fixed_conf, sampling_conf):
     return model
 
 
-def render_scenes(args, fixed_conf, sampling_conf):
+def render_scenes_from_configs(
+    fixed_conf, sampling_conf, seed, scene_num_samples, output_dir
+):
     if fixed_conf is None and sampling_conf is None:
         raise ValueError("Either fixed_conf or sampling_conf must be specified.")
     if fixed_conf is None:
@@ -101,14 +103,14 @@ def render_scenes(args, fixed_conf, sampling_conf):
 
     scene_result = {}
 
-    rng = np.random.default_rng(seed=args.seed)
+    rng = np.random.default_rng(seed=seed)
 
     light, light_position, light_energy = create_light(fixed_conf, sampling_conf)
     model = load_model(fixed_conf, sampling_conf)
 
     for i, (scm_outcomes, scm_noise_values, scene) in enumerate(
         model.sample_and_populate_scene(
-            args.scene_num_samples,
+            scene_num_samples,
             rng=rng,
         )
     ):
@@ -124,13 +126,13 @@ def render_scenes(args, fixed_conf, sampling_conf):
             "energy": light_energy,
         }
         save_run_outputs(
-            output_dir=args.output_dir,
+            output_dir=output_dir,
             run_name=i,
             img_data=data,
             scene_result=scene_result,
         )
     save_run_config(
-        output_dir=args.output_dir,
+        output_dir=output_dir,
         model=model,
         fixed_conf=fixed_conf,
         sampling_conf=sampling_conf,

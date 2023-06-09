@@ -6,7 +6,7 @@ import argparse
 import json
 import os
 
-from causal_images.render import render_scenes
+from causal_images.render import render_scenes_from_configs
 
 # TODO: Add hierarchical configs
 # TODO: Merge defaults
@@ -57,4 +57,10 @@ if fixed_conf is None and sampling_conf is None:
 if args.seed is not None:
     os.environ["BLENDER_PROC_RANDOM_SEED"] = args.seed
 
-render_scenes(args, fixed_conf, sampling_conf)
+render_scenes_from_configs(
+    fixed_conf=fixed_conf,
+    sampling_conf=sampling_conf,
+    seed=args.seed,
+    scene_num_samples=args.scene_num_samples,
+    output_dir=args.output_dir,
+)
