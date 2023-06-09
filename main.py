@@ -32,27 +32,25 @@ parser.add_argument(
 
 # Scene config
 parser.add_argument(
-    "--scene_config_path",
+    "--fixed_config",
 )
 parser.add_argument(
-    "--scene_sampling_config_path",
+    "--sampling_config",
 )
 
 args = parser.parse_args()
 
-scene_conf = None
-if args.scene_config_path is not None:
-    with open(args.scene_config_path) as f:
-        scene_conf = json.load(f)
+fixed_conf = None
+if args.fixed_config is not None:
+    with open(args.fixed_config) as f:
+        fixed_conf = json.load(f)
 
-scene_sampling_conf = None
-if args.scene_sampling_config_path is not None:
-    with open(args.scene_sampling_config_path) as f:
-        scene_sampling_conf = json.load(f)
+sampling_conf = None
+if args.sampling_config is not None:
+    with open(args.sampling_config) as f:
+        sampling_conf = json.load(f)
 
-if scene_conf is None and scene_sampling_conf is None:
-    raise ValueError(
-        "Either scene_config_path or scene_sampling_config_path must be specified."
-    )
+if fixed_conf is None and sampling_conf is None:
+    raise ValueError("Either fixed_config or sampling_config must be specified.")
 
-render_scenes(args, scene_conf, scene_sampling_conf)
+render_scenes(args, fixed_conf, sampling_conf)

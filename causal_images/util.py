@@ -42,23 +42,23 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def save_run_config(output_dir, model, scene_conf, scene_sampling_conf):
+def save_run_config(output_dir, model, fixed_conf, sampling_conf):
     # Save pickle of model
     with open(os.path.join(output_dir, "model.pkl"), "wb") as f:
         pickle.dump(model, f)
 
-    if scene_conf is not None:
-        with open(os.path.join(output_dir, "scene_config.json"), "w") as f:
-            json.dump(scene_conf, f, cls=NumpyEncoder)
+    if fixed_conf is not None:
+        with open(os.path.join(output_dir, "fixed_config.json"), "w") as f:
+            json.dump(fixed_conf, f, cls=NumpyEncoder)
 
-    if scene_sampling_conf is not None:
+    if sampling_conf is not None:
         # Save scene sampling config
-        with open(os.path.join(output_dir, "scene_sampling_config.json"), "w") as f:
-            json.dump(scene_sampling_conf, f, cls=NumpyEncoder)
+        with open(os.path.join(output_dir, "sampling_config.json"), "w") as f:
+            json.dump(sampling_conf, f, cls=NumpyEncoder)
 
         # Save referenced files
-        if "scm" in scene_sampling_conf:
-            scm_conf = scene_sampling_conf["scm"]
+        if "scm" in sampling_conf:
+            scm_conf = sampling_conf["scm"]
 
             if scm_conf["scm_path"] is not None:
                 save_model_component_file(output_dir, scm_conf["scm_path"], "scm")

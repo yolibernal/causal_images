@@ -8,16 +8,16 @@ from causal_images.scm import SceneInterventions, SceneManipulations, SceneSCM
 from causal_images.util import load_module_from_file, save_run_config, save_run_outputs
 
 
-def create_light(scene_conf, scene_sampling_conf, rng=np.random.default_rng()):
+def create_light(fixed_conf, sampling_conf, rng=np.random.default_rng()):
     light = bproc.types.Light()
     position = None
     energy = None
-    if "light" in scene_conf:
-        light_conf = scene_conf["light"]
+    if "light" in fixed_conf:
+        light_conf = fixed_conf["light"]
         position = light_conf["position"]
         energy = light_conf["energy"]
-    elif "light" in scene_sampling_conf:
-        light_conf = scene_sampling_conf["light"]
+    elif "light" in sampling_conf:
+        light_conf = sampling_conf["light"]
         position = bproc.sampler.shell(
             center=light_conf["center"],
             azimuth_min=light_conf["azimuth_bounds"][0],
@@ -35,12 +35,12 @@ def create_light(scene_conf, scene_sampling_conf, rng=np.random.default_rng()):
     return light, position, energy
 
 
-def create_camera_poses(scene_conf, scene_sampling_conf, objects=None):
+def create_camera_poses(fixed_conf, sampling_conf, objects=None):
     camera_poses = None
-    if "camera" in scene_conf:
-        camera_poses = np.array(scene_conf["camera"])
-    elif "camera" in scene_sampling_conf:
-        camera_conf = scene_sampling_conf["camera"]
+    if "camera" in fixed_conf:
+        camera_poses = np.array(fixed_conf["camera"])
+    elif "camera" in sampling_conf:
+        camera_conf = sampling_conf["camera"]
         camera_poses = np.zeros((camera_conf["num_samples"], 4, 4))
         for j in range(camera_conf["num_samples"]):
             cam2world_matrix = sample_object_facing_camera_pose(
@@ -59,14 +59,14 @@ def create_camera_poses(scene_conf, scene_sampling_conf, objects=None):
     return camera_poses
 
 
-def load_model(scene_conf, scene_sampling_conf):
-    if "scm_noise_values" in scene_conf:
-        fixed_noise_values = scene_conf["scm_noise_values"]
+def load_model(fixed_conf, sampling_conf):
+    if "scm_noise_values" in fixed_conf:
+        fixed_noise_values = fixed_conf["scm_noise_values"]
 
-    if "scm_outcomes" in scene_conf:
-        model = SceneSCM.from_scm_outcomes(scene_conf["scm_outcomes"])
-    elif "scm" in scene_sampling_conf:
-        scm_conf = scene_sampling_conf["scm"]
+    if "scm_outcomes" in fixed_conf:
+        model = SceneSCM.from_scm_outcomes(fixed_conf["scm_outcomes"])
+    elif "scm" in sampling_conf:
+        scm_conf = sampling_conf["scm"]
 
         scm = load_module_from_file(scm_conf["scm_path"], "scm")
         model: SceneSCM = scm.scm
@@ -91,24 +91,22 @@ def load_model(scene_conf, scene_sampling_conf):
     return model
 
 
-def render_scenes(args, scene_conf, scene_sampling_conf):
-    if scene_conf is None and scene_sampling_conf is None:
-        raise ValueError(
-            "Either scene_config_path or scene_sampling_config_path must be specified."
-        )
-    if scene_conf is None:
-        scene_conf = {}
-    if scene_sampling_conf is None:
-        scene_sampling_conf = {}
+def render_scenes(args, fixed_conf, sampling_conf):
+    if fixed_conf is None and sampling_conf is None:
+        raise ValueError("Either fixed_conf or sampling_conf must be specified.")
+    if fixed_conf is None:
+        fixed_conf = {}
+    if sampling_conf is None:
+        sampling_conf = {}
 
     scene_result = {}
 
     rng = np.random.default_rng(seed=args.seed)
 
     light, light_position, light_energy = create_light(
-        scene_conf, scene_sampling_conf, rng=rng
+        fixed_conf, sampling_conf, rng=rng
     )
-    model = load_model(scene_conf, scene_sampling_conf)
+    model = load_model(fixed_conf, sampling_conf)
 
     for i, (scm_outcomes, scm_noise_values, scene) in enumerate(
         model.sample_and_populate_scene(
@@ -117,7 +115,7 @@ def render_scenes(args, scene_conf, scene_sampling_conf):
         )
     ):
         objects = [obj.mesh for obj in scene.objects.values()]
-        camera_poses = create_camera_poses(scene_conf, scene_sampling_conf, objects)
+        camera_poses = create_camera_poses(fixed_conf, sampling_conf, objects)
         data = bproc.renderer.render()
 
         scene_result["scm_outcomes"] = scm_outcomes
@@ -136,6 +134,6 @@ def render_scenes(args, scene_conf, scene_sampling_conf):
     save_run_config(
         output_dir=args.output_dir,
         model=model,
-        scene_conf=scene_conf,
-        scene_sampling_conf=scene_sampling_conf,
+        fixed_conf=fixed_conf,
+        sampling_conf=sampling_conf,
     )

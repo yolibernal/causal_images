@@ -7,11 +7,7 @@ Using [BlenderProc](https://github.com/DLR-RM/BlenderProc) to create training im
 ### Run
 
 Sample from the SCM and render:
-
-`blenderproc run main.py --output_dir <OUTPUT_DIR> --scene_sampling_config_path scene_sampling_config.json`
-
-Render images from existing scenes:
-`blenderproc run main.py --output_dir <OUTPUT_DIR> --scene_config_path scene_config.json`
+`blenderproc run main.py --output_dir <OUTPUT_DIR> --sampling_config sampling.json --fixed_config fixed.json`
 
 ### Visualize
 
