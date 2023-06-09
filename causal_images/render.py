@@ -110,19 +110,17 @@ def render_scenes(args, scene_conf, scene_sampling_conf):
     )
     model = load_model(scene_conf, scene_sampling_conf)
 
-    for i, df_scene in enumerate(
+    for i, (df_outcomes, scene) in enumerate(
         model.sample_and_populate_scene(
             args.scene_num_samples,
             rng=rng,
         )
     ):
-        objects = [obj.mesh for obj in df_scene.iloc[0]._scene.objects.values()]
+        objects = [obj.mesh for obj in scene.objects.values()]
         camera_poses = create_camera_poses(scene_conf, scene_sampling_conf, objects)
         data = bproc.renderer.render()
 
-        scene_result["scm_outcomes"] = (
-            df_scene.drop(columns=["_scene"]).iloc[0].to_dict()
-        )
+        scene_result["scm_outcomes"] = df_outcomes.iloc[0].to_dict()
         scene_result["camera"] = camera_poses
         scene_result["light"] = {
             "position": light_position,

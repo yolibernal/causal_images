@@ -75,11 +75,8 @@ class SceneSCM:
                 scm.intervention(interventions.functional_map_factory(scene, rng))
             df_sample = scm.sample(1, fixed_noise_values=fixed_noise_values)
 
-            df_sample["_scene"] = [scene]
-
             if manipulations is not None:
                 scene_outcomes = df_sample.iloc[0]
-                scene = scene_outcomes["_scene"]
 
                 # TODO: save image and results before manipulations
 
@@ -99,9 +96,9 @@ class SceneSCM:
                         )
                         scene_outcomes[node_name] = new_node_value
 
-            df_objects = self._resolve_object_shapes(df_sample)
+            df_outcomes = self._resolve_object_shapes(df_sample, scene=scene)
 
-            yield df_objects
+            yield df_outcomes, scene
 
             scene.cleanup()
 
@@ -129,10 +126,9 @@ class SceneSCM:
         else:
             return ([], lambda: node_value, None)
 
-    def _resolve_sample_object_shapes(self, x: pd.Series):
+    def _resolve_sample_object_shapes(self, x: pd.Series, scene):
         """Resolve the object ID to the actual object shape name."""
         row = x.copy()
-        scene = row._scene
 
         for node_name, data in row.iteritems():
             if str(node_name).startswith("obj_") and "__noise__" not in node_name:
@@ -140,5 +136,5 @@ class SceneSCM:
                 row[node_name] = scene.objects[obj_id].shape
         return row
 
-    def _resolve_object_shapes(self, df: pd.DataFrame):
-        return df.apply(self._resolve_sample_object_shapes, axis=1)
+    def _resolve_object_shapes(self, df: pd.DataFrame, scene):
+        return df.apply(self._resolve_sample_object_shapes, axis=1, scene=scene)
