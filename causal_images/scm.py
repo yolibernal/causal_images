@@ -73,11 +73,10 @@ class SceneSCM:
             scm = SCM(self.functional_map_factory(scene, rng), seed=rng)
             if interventions is not None:
                 scm.intervention(interventions.functional_map_factory(scene, rng))
-            df_sample = scm.sample(1, fixed_noise_values=fixed_noise_values)
+            df_outcomes = scm.sample(1, fixed_noise_values=fixed_noise_values)
+            scm_outcomes = df_outcomes.iloc[0].to_dict()
 
             if manipulations is not None:
-                scene_outcomes = df_sample.iloc[0]
-
                 # TODO: save image and results before manipulations
 
                 # Execute manipulations
@@ -86,19 +85,15 @@ class SceneSCM:
                         node_name,
                         manipulation_callable,
                     ) in manipulations.functional_map_factory(scene, rng).items():
-                        prev_node_value = (
-                            scene_outcomes[node_name]
-                            if node_name in df_sample
-                            else None
-                        )
+                        prev_node_value = scm_outcomes.get(node_name)
                         new_node_value = manipulation_callable(
-                            prev_node_value, scene_outcomes
+                            prev_node_value, scm_outcomes
                         )
-                        scene_outcomes[node_name] = new_node_value
+                        scm_outcomes[node_name] = new_node_value
 
-            df_outcomes = self._resolve_object_shapes(df_sample, scene=scene)
+            scm_outcomes = self._resolve_scene_object_ids(scm_outcomes, scene=scene)
 
-            yield df_outcomes, scene
+            yield scm_outcomes, scene
 
             scene.cleanup()
 
@@ -126,15 +121,13 @@ class SceneSCM:
         else:
             return ([], lambda: node_value, None)
 
-    def _resolve_sample_object_shapes(self, x: pd.Series, scene):
-        """Resolve the object ID to the actual object shape name."""
-        row = x.copy()
-
-        for node_name, data in row.iteritems():
-            if str(node_name).startswith("obj_") and "__noise__" not in node_name:
-                obj_id = data
-                row[node_name] = scene.objects[obj_id].shape
-        return row
-
-    def _resolve_object_shapes(self, df: pd.DataFrame, scene):
-        return df.apply(self._resolve_sample_object_shapes, axis=1, scene=scene)
+    def _resolve_scene_object_ids(self, scene_outcomes: Dict, scene):
+        """Resolve the object ID to the actual object."""
+        resolved_scene_outcomes = {}
+        for node_name, node_value in scene_outcomes.items():
+            if node_name.startswith("obj_") and "__noise__" not in node_name:
+                obj_id = node_value
+                resolved_scene_outcomes[node_name] = scene.objects[obj_id].shape
+            else:
+                resolved_scene_outcomes[node_name] = node_value
+        return resolved_scene_outcomes
