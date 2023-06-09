@@ -73,8 +73,11 @@ class SceneSCM:
             scm = SCM(self.functional_map_factory(scene, rng), seed=rng)
             if interventions is not None:
                 scm.intervention(interventions.functional_map_factory(scene, rng))
-            df_outcomes = scm.sample(1, fixed_noise_values=fixed_noise_values)
+            df_outcomes, df_noise_values = scm.sample(
+                1, fixed_noise_values=fixed_noise_values
+            )
             scm_outcomes = df_outcomes.iloc[0].to_dict()
+            scm_noise_values = df_noise_values.iloc[0].to_dict()
 
             if manipulations is not None:
                 # TODO: save image and results before manipulations
@@ -90,10 +93,11 @@ class SceneSCM:
                             prev_node_value, scm_outcomes
                         )
                         scm_outcomes[node_name] = new_node_value
+                        scm_noise_values[node_name] = np.zeros(1)
 
             scm_outcomes = self._resolve_scene_object_ids(scm_outcomes, scene=scene)
 
-            yield scm_outcomes, scene
+            yield scm_outcomes, scm_noise_values, scene
 
             scene.cleanup()
 
@@ -125,7 +129,7 @@ class SceneSCM:
         """Resolve the object ID to the actual object."""
         resolved_scene_outcomes = {}
         for node_name, node_value in scene_outcomes.items():
-            if node_name.startswith("obj_") and "__noise__" not in node_name:
+            if node_name.startswith("obj_"):
                 obj_id = node_value
                 resolved_scene_outcomes[node_name] = scene.objects[obj_id].shape
             else:

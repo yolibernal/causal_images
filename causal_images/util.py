@@ -74,11 +74,6 @@ def save_run_config(output_dir, model, scene_conf, scene_sampling_conf):
                     scm_conf["manipulations_path"],
                     "manipulations",
                 )
-            if scm_conf["fixed_noise_path"] is not None:
-                shutil.copyfile(
-                    scm_conf["fixed_noise_path"],
-                    os.path.join(output_dir, "fixed_noise.json"),
-                )
 
         # Save SCM plot
         # fig, ax = model.plot()

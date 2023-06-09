@@ -60,6 +60,9 @@ def create_camera_poses(scene_conf, scene_sampling_conf, objects=None):
 
 
 def load_model(scene_conf, scene_sampling_conf):
+    if "scm_noise_values" in scene_conf:
+        fixed_noise_values = scene_conf["scm_noise_values"]
+
     if "scm_outcomes" in scene_conf:
         model = SceneSCM.from_scm_outcomes(scene_conf["scm_outcomes"])
     elif "scm" in scene_sampling_conf:
@@ -81,10 +84,7 @@ def load_model(scene_conf, scene_sampling_conf):
             )
             model_manipulations: SceneManipulations = manipulations.manipulations
             model.manipulations = model_manipulations
-
-        if scm_conf["fixed_noise_path"] is not None:
-            with open(scm_conf["fixed_noise_path"]) as f:
-                fixed_noise_values = json.load(f)
+        if fixed_noise_values is not None:
             model.fixed_noise_values = fixed_noise_values
     else:
         raise ValueError("SCM config not specified.")
@@ -110,7 +110,7 @@ def render_scenes(args, scene_conf, scene_sampling_conf):
     )
     model = load_model(scene_conf, scene_sampling_conf)
 
-    for i, (scm_outcomes, scene) in enumerate(
+    for i, (scm_outcomes, scm_noise_values, scene) in enumerate(
         model.sample_and_populate_scene(
             args.scene_num_samples,
             rng=rng,
@@ -121,6 +121,7 @@ def render_scenes(args, scene_conf, scene_sampling_conf):
         data = bproc.renderer.render()
 
         scene_result["scm_outcomes"] = scm_outcomes
+        scene_result["scm_noise_values"] = scm_noise_values
         scene_result["camera"] = camera_poses
         scene_result["light"] = {
             "position": light_position,
