@@ -4,6 +4,7 @@ bproc.init()
 
 import argparse
 import json
+import os
 
 from causal_images.render import render_scenes
 
@@ -52,5 +53,8 @@ if args.sampling_config is not None:
 
 if fixed_conf is None and sampling_conf is None:
     raise ValueError("Either fixed_config or sampling_config must be specified.")
+
+if args.seed is not None:
+    os.environ["BLENDER_PROC_RANDOM_SEED"] = args.seed
 
 render_scenes(args, fixed_conf, sampling_conf)

@@ -8,7 +8,7 @@ from causal_images.scm import SceneInterventions, SceneManipulations, SceneSCM
 from causal_images.util import load_module_from_file, save_run_config, save_run_outputs
 
 
-def create_light(fixed_conf, sampling_conf, rng=np.random.default_rng()):
+def create_light(fixed_conf, sampling_conf):
     light = bproc.types.Light()
     position = None
     energy = None
@@ -27,7 +27,7 @@ def create_light(fixed_conf, sampling_conf, rng=np.random.default_rng()):
             radius_min=light_conf["radius_bounds"][0],
             radius_max=light_conf["radius_bounds"][1],
         )
-        energy = rng.uniform(*light_conf["energy_bounds"])
+        energy = np.random.uniform(*light_conf["energy_bounds"])
     else:
         raise ValueError("Light config not specified.")
     light.set_location(position)
@@ -103,9 +103,7 @@ def render_scenes(args, fixed_conf, sampling_conf):
 
     rng = np.random.default_rng(seed=args.seed)
 
-    light, light_position, light_energy = create_light(
-        fixed_conf, sampling_conf, rng=rng
-    )
+    light, light_position, light_energy = create_light(fixed_conf, sampling_conf)
     model = load_model(fixed_conf, sampling_conf)
 
     for i, (scm_outcomes, scm_noise_values, scene) in enumerate(

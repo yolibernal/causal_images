@@ -9,16 +9,14 @@ from causal_images.scene import PrimitiveShape, Scene
 
 
 class SceneInterventions:
-    def __init__(
-        self, functional_map_factory: Callable[[Scene, np.random.Generator], dict]
-    ):
+    def __init__(self, functional_map_factory: Callable[[Scene], dict]):
         self.functional_map_factory = functional_map_factory
 
 
 class SceneManipulations:
     def __init__(
         self,
-        functional_map_factory: Callable[[Scene, np.random.Generator], dict],
+        functional_map_factory: Callable[[Scene], dict],
     ):
         self.functional_map_factory = functional_map_factory
 
@@ -26,7 +24,7 @@ class SceneManipulations:
 class SceneSCM:
     def __init__(
         self,
-        functional_map_factory: Callable[[Scene, np.random.Generator], dict],
+        functional_map_factory: Callable[[Scene], dict],
         interventions: SceneInterventions = None,
         manipulations: SceneManipulations = None,
         fixed_noise_values: Dict[str, Sequence[float]] = None,
@@ -39,7 +37,7 @@ class SceneSCM:
     @classmethod
     def from_scm_outcomes(cls, scm_outcomes):
         """Create a SceneSCM from deterministic outcomes."""
-        functional_map_factory = lambda scene, rng: {
+        functional_map_factory = lambda scene: {
             node_name: cls._create_deterministic_node_callable(
                 cls, scene, node_name, node_value
             )
@@ -70,9 +68,9 @@ class SceneSCM:
             # Create new scene
             scene = Scene()
             # Create new SCM for scene
-            scm = SCM(self.functional_map_factory(scene, rng), seed=rng)
+            scm = SCM(self.functional_map_factory(scene), seed=rng)
             if interventions is not None:
-                scm.intervention(interventions.functional_map_factory(scene, rng))
+                scm.intervention(interventions.functional_map_factory(scene))
             df_outcomes, df_noise_values = scm.sample(
                 1, fixed_noise_values=fixed_noise_values
             )
@@ -87,7 +85,7 @@ class SceneSCM:
                     for (
                         node_name,
                         manipulation_callable,
-                    ) in manipulations.functional_map_factory(scene, rng).items():
+                    ) in manipulations.functional_map_factory(scene).items():
                         prev_node_value = scm_outcomes.get(node_name)
                         new_node_value = manipulation_callable(
                             prev_node_value, scm_outcomes
