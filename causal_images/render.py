@@ -60,6 +60,7 @@ def create_camera_poses(fixed_conf, sampling_conf, objects=None):
 
 
 def load_model(fixed_conf, sampling_conf):
+    fixed_noise_values = None
     if "scm_noise_values" in fixed_conf:
         fixed_noise_values = fixed_conf["scm_noise_values"]
 
@@ -92,7 +93,7 @@ def load_model(fixed_conf, sampling_conf):
 
 
 def render_scenes_from_configs(
-    fixed_conf, sampling_conf, seed, scene_num_samples, output_dir
+    fixed_conf, sampling_conf, seed, scene_num_samples, output_dir, run_names=None
 ):
     if fixed_conf is None and sampling_conf is None:
         raise ValueError("Either fixed_conf or sampling_conf must be specified.")
@@ -127,7 +128,7 @@ def render_scenes_from_configs(
         }
         save_run_outputs(
             output_dir=output_dir,
-            run_name=i,
+            run_name=run_names[i] if run_names is not None else i,
             img_data=data,
             scene_result=scene_result,
         )

@@ -14,10 +14,7 @@ class SceneInterventions:
 
 
 class SceneManipulations:
-    def __init__(
-        self,
-        functional_map_factory: Callable[[Scene], dict],
-    ):
+    def __init__(self, functional_map_factory: Callable[[Scene], dict]):
         self.functional_map_factory = functional_map_factory
 
 

@@ -10,7 +10,6 @@ from causal_images.render import render_scenes_from_configs
 
 # TODO: Add hierarchical configs
 # TODO: Merge defaults
-# TODO: Set BlenderProc seed (https://dlr-rm.github.io/BlenderProc/blenderproc.python.modules.main.InitializerModule.html)
 # TODO: allow multiple interventions and manipulations
 
 # Argument parsing

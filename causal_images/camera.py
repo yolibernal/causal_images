@@ -47,10 +47,6 @@ def sample_object_facing_camera_pose(
     # Distance to make bounding sphere fit into fov
     d = r / np.sin(fov / 2)
 
-    bproc.camera.set_intrinsics_from_blender_params(
-        lens=fov, lens_unit="FOV", clip_end=d + r
-    )
-
     # Sample location
     location = bproc.sampler.shell(
         center=bounding_sphere_center,
