@@ -7,8 +7,9 @@ import sys
 
 import blenderproc as bproc
 import dill as pickle
+import h5py
 import numpy as np
-import pandas as pd
+from PIL import Image
 
 from causal_images.scene import PrimitiveShape
 
@@ -93,3 +94,10 @@ def save_run_outputs(
 
     with open(os.path.join(run_dir, "scene_result.json"), "w") as f:
         json.dump(scene_result, f, cls=NumpyEncoder)
+
+
+def hdf5_to_image(input_path, output_path, format="JPEG"):
+    hdf = h5py.File(input_path, "r")
+    colors = np.array(hdf["colors"])
+    img = Image.fromarray(colors.astype("uint8"), "RGB")
+    img.save(output_path, format)

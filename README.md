@@ -8,11 +8,15 @@ Using [BlenderProc](https://github.com/DLR-RM/BlenderProc) to create training im
 
 Sample from the SCM and render:
 
-`blenderproc run sample.py --output_dir outputs/basic --scene_num_samples=5 --sampling_config examples/basic/sampling.json --fixed_config examples/basic/config.json`
+`blenderproc run main.py sample --output_dir outputs/basic --scene_num_samples=5 --sampling_config examples/basic/sampling.json --fixed_config examples/basic/config.json`
 
 Generate counterfactuals from previous output:
 
-`blenderproc run counterfactual.py --input_dir outputs/basic  --output_dir outputs/basic_counterfactual  --interventions examples/counterfactual/interventions.py`
+`blenderproc run main.py counterfactual --input_dir outputs/basic  --output_dir outputs/basic_counterfactual  --interventions_path examples/counterfactual/interventions.py`
+
+Export output as data/labels:
+
+`blenderproc run main.py export --input_dir outputs/basic --output_dir outputs/basic_export --to-image`
 
 ### Visualize
 
