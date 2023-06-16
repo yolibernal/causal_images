@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import shutil
 
@@ -46,5 +47,13 @@ for subdir, dirs, files in os.walk(input_dir):
                 hdf5_to_image(filepath, os.path.join(output_data_dir, f"{file_index}.jpg"))
             else:
                 shutil.copy(filepath, os.path.join(output_data_dir, f"{file_index}.hdf5"))
-            shutil.copy(scene_result_path, os.path.join(output_labels_dir, f"{file_index}.json"))
+            with open(scene_result_path) as f:
+                scene_result = json.load(f)
+
+            # NOTE: Not saving cameras because they are not specific for only that image (camera might be list of multiple sampled poses)
+            label = {
+                k: v for k, v in scene_result.items() if k in ["scm_outcomes", "scm_noise_values"]
+            }
+            with open(os.path.join(output_labels_dir, f"{file_index}.json"), "w") as f:
+                json.dump(label, f)
             file_index += 1
