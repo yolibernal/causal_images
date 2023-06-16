@@ -37,9 +37,7 @@ seed = args.seed
 
 # Load the scm
 scm_paths = [
-    os.path.join(input_dir, f)
-    for f in os.listdir(input_dir)
-    if "_SCM_" in f and f.endswith(".py")
+    os.path.join(input_dir, f) for f in os.listdir(input_dir) if "_SCM_" in f and f.endswith(".py")
 ]
 if len(scm_paths) != 1:
     raise ValueError("Expected exactly one SCM file.")
@@ -70,6 +68,5 @@ for run_dir in run_directories:
         sampling_conf=sampling_conf,
         seed=seed,
         scene_num_samples=1,
-        output_dir=output_dir,
-        run_names=[run_dir],
+        output_dir=os.path.join(output_dir, run_dir),
     )
