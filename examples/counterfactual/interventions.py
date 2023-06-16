@@ -1,6 +1,6 @@
 from causal_images.scm import SceneInterventions
 
-CENTER_OFFSET = 10
+CENTER_OFFSET = 5
 NOISE_SCALE1 = 3
 
 INTERVENTION_OFFSET = 5
