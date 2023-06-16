@@ -56,7 +56,7 @@ sampling_conf = {
 }
 excluded_dirs = ["__pycache__"]
 run_directories = next(os.walk(input_dir))[1]
-for i, run_dir in enumerate(run_directories):
+for run_dir in run_directories:
     if run_dir in excluded_dirs:
         continue
     scene_result_path = os.path.join(input_dir, run_dir, "scene_result.json")
@@ -71,5 +71,5 @@ for i, run_dir in enumerate(run_directories):
         seed=seed,
         scene_num_samples=1,
         output_dir=output_dir,
-        run_names=[i],
+        run_names=[run_dir],
     )
