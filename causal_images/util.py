@@ -96,8 +96,8 @@ def save_run_outputs(
         json.dump(scene_result, f, cls=NumpyEncoder)
 
 
-def hdf5_to_image(input_path, output_path, format="JPEG"):
+def hdf5_to_image(input_path):
     hdf = h5py.File(input_path, "r")
     colors = np.array(hdf["colors"])
     img = Image.fromarray(colors.astype("uint8"), "RGB")
-    img.save(output_path, format)
+    return img

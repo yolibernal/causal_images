@@ -73,16 +73,12 @@ def load_model(fixed_conf, sampling_conf):
         model: SceneSCM = scm.scm
 
         if scm_conf["interventions_path"] is not None:
-            interventions = load_module_from_file(
-                scm_conf["interventions_path"], "interventions"
-            )
+            interventions = load_module_from_file(scm_conf["interventions_path"], "interventions")
             model_interventions: SceneInterventions = interventions.interventions
             model.interventions = model_interventions
 
         if scm_conf["manipulations_path"] is not None:
-            manipulations = load_module_from_file(
-                scm_conf["manipulations_path"], "manipulations"
-            )
+            manipulations = load_module_from_file(scm_conf["manipulations_path"], "manipulations")
             model_manipulations: SceneManipulations = manipulations.manipulations
             model.manipulations = model_manipulations
         if fixed_noise_values is not None:
@@ -105,6 +101,10 @@ def render_scenes_from_configs(
     scene_result = {}
 
     rng = np.random.default_rng(seed=seed)
+
+    resolution = fixed_conf.get("resolution", [512, 512])
+    bproc.camera.set_resolution(*resolution)
+    scene_result["resolution"] = resolution
 
     light, light_position, light_energy = create_light(fixed_conf, sampling_conf)
     model = load_model(fixed_conf, sampling_conf)

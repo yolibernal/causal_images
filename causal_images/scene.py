@@ -83,19 +83,13 @@ class Scene:
         )
         target_pos = np.array(
             [
-                reference_critical_pos
-                + target_obj.get_location()[0]
-                - target_critical_pos
+                reference_critical_pos + target_obj.get_location()[0] - target_critical_pos
                 if critical_dim == 0
                 else reference_pos[0],
-                reference_critical_pos
-                + target_obj.get_location()[1]
-                - target_critical_pos
+                reference_critical_pos + target_obj.get_location()[1] - target_critical_pos
                 if critical_dim == 1
                 else reference_pos[1],
-                reference_critical_pos
-                + target_obj.get_location()[2]
-                - target_critical_pos
+                reference_critical_pos + target_obj.get_location()[2] - target_critical_pos
                 if critical_dim == 2
                 else reference_pos[2],
             ]
