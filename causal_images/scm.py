@@ -35,9 +35,7 @@ class SceneSCM:
     def from_scm_outcomes(cls, scm_outcomes):
         """Create a SceneSCM from deterministic outcomes."""
         functional_map_factory = lambda scene: {
-            node_name: cls._create_deterministic_node_callable(
-                cls, scene, node_name, node_value
-            )
+            node_name: cls._create_deterministic_node_callable(cls, scene, node_name, node_value)
             for node_name, node_value in scm_outcomes.items()
         }
         return cls(functional_map_factory)
@@ -66,10 +64,17 @@ class SceneSCM:
             scene = Scene()
             # Create new SCM for scene
             scm = SCM(self.functional_map_factory(scene), seed=rng)
+            non_intervened_fixed_noise_values = fixed_noise_values
             if interventions is not None:
-                scm.intervention(interventions.functional_map_factory(scene))
+                interventions_functional_map = interventions.functional_map_factory(scene)
+                non_intervened_fixed_noise_values = {
+                    node_name: node_value
+                    for node_name, node_value in fixed_noise_values.items()
+                    if node_name not in interventions_functional_map
+                }
+                scm.intervention(interventions_functional_map)
             df_outcomes, df_noise_values = scm.sample(
-                1, fixed_noise_values=fixed_noise_values
+                1, fixed_noise_values=non_intervened_fixed_noise_values
             )
             scm_outcomes = df_outcomes.iloc[0].to_dict()
             scm_noise_values = df_noise_values.iloc[0].to_dict()
@@ -84,9 +89,7 @@ class SceneSCM:
                         manipulation_callable,
                     ) in manipulations.functional_map_factory(scene).items():
                         prev_node_value = scm_outcomes.get(node_name)
-                        new_node_value = manipulation_callable(
-                            prev_node_value, scm_outcomes
-                        )
+                        new_node_value = manipulation_callable(prev_node_value, scm_outcomes)
                         scm_outcomes[node_name] = new_node_value
                         scm_noise_values[node_name] = np.zeros(1)
 
