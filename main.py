@@ -111,8 +111,9 @@ def counterfactual(input_dir, output_dir, interventions_path, seed):
 @cli.command()
 @click.option("--input_dir", help="Input directory", required=True)
 @click.option("--output_dir", help="Output directory", required=True)
-@click.option("--to-image", help="Convert hdf5 to image", is_flag=True)
-def export(input_dir, output_dir, to_image):
+@click.option("--to_image", help="Convert hdf5 to image", is_flag=True)
+@click.option("--image_format", help="Image format", default="JPEG")
+def export(input_dir, output_dir, to_image, image_format: str):
     file_index = 0
 
     output_data_dir = os.path.join(output_dir, "data")
@@ -129,7 +130,8 @@ def export(input_dir, output_dir, to_image):
                 dir_path = os.path.dirname(filepath)
                 scene_result_path = os.path.join(dir_path, "scene_result.json")
                 if to_image:
-                    hdf5_to_image(filepath, os.path.join(output_data_dir, f"{file_index}.jpg"))
+                    img = hdf5_to_image(filepath)
+                    img.save(os.path.join(output_data_dir, f"{file_index}.{image_format.lower()}"))
                 else:
                     shutil.copy(filepath, os.path.join(output_data_dir, f"{file_index}.hdf5"))
                 with open(scene_result_path) as f:
