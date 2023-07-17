@@ -8,7 +8,7 @@ from causal_images.scm import SceneInterventions, SceneManipulations, SceneSCM
 from causal_images.util import load_module_from_file, save_run_config, save_run_outputs
 
 
-def create_light(fixed_conf, sampling_conf):
+def create_light_from_config(fixed_conf, sampling_conf):
     light = bproc.types.Light()
     position = None
     energy = None
@@ -89,7 +89,13 @@ def load_model(fixed_conf, sampling_conf):
 
 
 def render_scenes_from_configs(
-    fixed_conf, sampling_conf, seed, scene_num_samples, output_dir, run_names=None
+    fixed_conf,
+    sampling_conf,
+    seed,
+    scene_num_samples,
+    output_dir,
+    create_light=True,
+    run_names=None,
 ):
     if fixed_conf is None and sampling_conf is None:
         raise ValueError("Either fixed_conf or sampling_conf must be specified.")
@@ -106,7 +112,8 @@ def render_scenes_from_configs(
     bproc.camera.set_resolution(*resolution)
     scene_result["resolution"] = resolution
 
-    light, light_position, light_energy = create_light(fixed_conf, sampling_conf)
+    if create_light:
+        light, light_position, light_energy = create_light_from_config(fixed_conf, sampling_conf)
     model = load_model(fixed_conf, sampling_conf)
 
     for i, (scm_outcomes, scm_noise_values, scene) in enumerate(
