@@ -94,7 +94,6 @@ def render_scenes_from_configs(
     seed,
     scene_num_samples,
     output_dir,
-    create_light=True,
     run_names=None,
 ):
     if fixed_conf is None and sampling_conf is None:
@@ -112,8 +111,8 @@ def render_scenes_from_configs(
     bproc.camera.set_resolution(*resolution)
     scene_result["resolution"] = resolution
 
-    if create_light:
-        light, light_position, light_energy = create_light_from_config(fixed_conf, sampling_conf)
+    light, light_position, light_energy = create_light_from_config(fixed_conf, sampling_conf)
+
     model = load_model(fixed_conf, sampling_conf)
 
     for i, (scm_outcomes, scm_noise_values, scene) in enumerate(
@@ -145,3 +144,4 @@ def render_scenes_from_configs(
         fixed_conf=fixed_conf,
         sampling_conf=sampling_conf,
     )
+    light.delete()

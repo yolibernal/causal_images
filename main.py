@@ -90,7 +90,6 @@ def counterfactual(input_dir, output_dir, interventions_path, seed):
     }
     excluded_dirs = ["__pycache__"]
     run_directories = next(os.walk(input_dir))[1]
-    create_light = True
     for run_dir in run_directories:
         if run_dir in excluded_dirs:
             continue
@@ -106,10 +105,7 @@ def counterfactual(input_dir, output_dir, interventions_path, seed):
             seed=seed,
             scene_num_samples=1,
             output_dir=os.path.join(output_dir, run_dir),
-            create_light=create_light,
         )
-        # Create light only for the first run because it does not get reset with bproc.utility.reset_keyframes()
-        create_light = False
 
 
 @cli.command()
