@@ -1,4 +1,5 @@
 import blenderproc as bproc
+import numpy as np
 
 bproc.init()
 
@@ -90,6 +91,8 @@ def counterfactual(input_dir, output_dir, interventions_path, seed):
     }
     excluded_dirs = ["__pycache__"]
     run_directories = next(os.walk(input_dir))[1]
+
+    rng = np.random.default_rng(seed=seed)
     for run_dir in run_directories:
         if run_dir in excluded_dirs:
             continue
@@ -99,10 +102,11 @@ def counterfactual(input_dir, output_dir, interventions_path, seed):
         with open(scene_result_path) as f:
             scene_result = json.load(f)
         fixed_conf = {k: v for k, v in scene_result.items() if k not in ["scm_outcomes"]}
+        run_seed = rng.integers(0, 2**32 - 1)
         render_scenes_from_configs(
             fixed_conf=fixed_conf,
             sampling_conf=sampling_conf,
-            seed=seed,
+            seed=run_seed,
             scene_num_samples=1,
             output_dir=os.path.join(output_dir, run_dir),
         )
