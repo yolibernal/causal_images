@@ -1,6 +1,7 @@
 import json
 
 import blenderproc as bproc
+import bpy
 import numpy as np
 
 from causal_images.camera import sample_object_facing_camera_pose
@@ -38,7 +39,14 @@ def create_light_from_config(fixed_conf, sampling_conf):
 def create_camera_poses(fixed_conf, sampling_conf, objects=None):
     camera_poses = None
     if "camera" in fixed_conf:
-        camera_poses = np.array(fixed_conf["camera"])
+        if "poses" in fixed_conf["camera"]:
+            camera_poses = np.array(fixed_conf["camera"]["poses"])
+
+        if "type" in fixed_conf["camera"]:
+            cam_ob = bpy.context.scene.camera
+            cam_ob.data.type = fixed_conf["camera"]["type"]
+            if cam_ob.data.type == "ORTHO":
+                cam_ob.data.ortho_scale = fixed_conf["camera"].get("ortho_scale", 5)
     elif "camera" in sampling_conf:
         camera_conf = sampling_conf["camera"]
         camera_poses = np.zeros((camera_conf["num_samples"], 4, 4))
@@ -56,6 +64,7 @@ def create_camera_poses(fixed_conf, sampling_conf, objects=None):
         raise ValueError("Camera config not specified.")
     for cam2world_matrix in camera_poses:
         bproc.camera.add_camera_pose(cam2world_matrix)
+
     return camera_poses
 
 
@@ -127,7 +136,10 @@ def render_scenes_from_configs(
 
         scene_result["scm_outcomes"] = scm_outcomes
         scene_result["scm_noise_values"] = scm_noise_values
-        scene_result["camera"] = camera_poses
+        scene_result["camera"] = {
+            **fixed_conf["camera"],
+            "poses": camera_poses.tolist(),
+        }
         scene_result["light"] = {
             "position": light_position,
             "energy": light_energy,

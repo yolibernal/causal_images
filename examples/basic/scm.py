@@ -21,9 +21,7 @@ scm = SceneSCM(
         "obj_2": ([], lambda: scene.create_primitive(PrimitiveShape.CUBE), None),
         "pos_2": (
             ["obj_2"],
-            lambda noise, obj_2: scene.set_object_position(
-                obj_2, [0, 0, *noise * NOISE_SCALE2]
-            ),
+            lambda noise, obj_2: scene.set_object_position(obj_2, [0, 0, *noise * NOISE_SCALE2]),
             Uniform("P", -1, 1),
         ),
         "obj_3": ([], lambda: scene.create_primitive(PrimitiveShape.CUBE), None),
