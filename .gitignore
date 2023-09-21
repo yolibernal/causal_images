@@ -1,5 +1,8 @@
 configs/
 outputs/
+data/
+scripts/
+scenes/
 
 .DS_Store
 
