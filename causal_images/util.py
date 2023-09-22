@@ -11,8 +11,6 @@ import h5py
 import numpy as np
 from PIL import Image
 
-from causal_images.scene import PrimitiveShape
-
 
 # https://stackoverflow.com/a/67692
 def load_module_from_file(path, module_name):

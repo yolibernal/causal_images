@@ -35,14 +35,24 @@ class Scene:
     def __init__(self):
         self.objects: Dict[str, ObjectInfo] = {}
 
-    def create_primitive(self, shape):
+    def create_primitive(self, shape, material_name=None):
         obj_id = uuid()
         obj = bproc.object.create_primitive(shape.value)
+        if material_name is not None:
+            materials = bproc.material.collect_all()
+            material = bproc.filter.one_by_attr(materials, "name", material_name)
+            obj.add_material(material)
+
         self.objects[obj_id] = ObjectInfo(mesh=obj, shape=shape)
         return obj_id
 
     def set_object_position(self, obj_id, position):
-        self.objects[obj_id].mesh.set_location(position)
+        current_position = self.objects[obj_id].mesh.get_location()
+        new_position = current_position.copy()
+        for i, pos in enumerate(position):
+            if pos is not None:
+                new_position[i] = pos
+        self.objects[obj_id].mesh.set_location(new_position)
         return position
 
     def set_object_relative_position(

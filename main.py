@@ -21,6 +21,7 @@ def cli():
 @cli.command()
 @click.option("--fixed_config_path", "--fixed_config", help="Fixed config")
 @click.option("--sampling_config_path", "--sampling_config", help="Sampling config")
+@click.option("--material_library_path", help="Path to .blend file containing materials")
 @click.option("--output_dir", help="Output directory", required=True)
 @click.option(
     "--seed",
@@ -33,7 +34,14 @@ def cli():
     type=int,
     help="Number of sampled scenes",
 )
-def sample(fixed_config_path, sampling_config_path, output_dir, seed, scene_num_samples):
+def sample(
+    fixed_config_path,
+    sampling_config_path,
+    material_library_path,
+    output_dir,
+    seed,
+    scene_num_samples,
+):
     fixed_conf = None
     if fixed_config_path is not None:
         with open(fixed_config_path) as f:
@@ -53,6 +61,7 @@ def sample(fixed_config_path, sampling_config_path, output_dir, seed, scene_num_
     render_scenes_from_configs(
         fixed_conf=fixed_conf,
         sampling_conf=sampling_conf,
+        material_library_path=material_library_path,
         seed=seed,
         scene_num_samples=scene_num_samples,
         output_dir=output_dir,
@@ -62,6 +71,7 @@ def sample(fixed_config_path, sampling_config_path, output_dir, seed, scene_num_
 @cli.command()
 @click.option("--input_dir", help="Input directory", required=True)
 @click.option("--output_dir", help="Output directory", required=True)
+@click.option("--material_library_path", help="Path to .blend file containing materials")
 @click.option("--interventions_path", help="Interventions file", required=True)
 @click.option(
     "--seed",
@@ -69,7 +79,7 @@ def sample(fixed_config_path, sampling_config_path, output_dir, seed, scene_num_
     type=int,
     default=0,
 )
-def counterfactual(input_dir, output_dir, interventions_path, seed):
+def counterfactual(input_dir, output_dir, material_library_path, interventions_path, seed):
     # Load the scm
     scm_paths = [
         os.path.join(input_dir, f)
@@ -106,6 +116,7 @@ def counterfactual(input_dir, output_dir, interventions_path, seed):
         render_scenes_from_configs(
             fixed_conf=fixed_conf,
             sampling_conf=sampling_conf,
+            material_library_path=material_library_path,
             seed=run_seed,
             scene_num_samples=1,
             output_dir=os.path.join(output_dir, run_dir),

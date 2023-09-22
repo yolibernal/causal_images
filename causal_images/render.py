@@ -97,9 +97,19 @@ def load_model(fixed_conf, sampling_conf):
     return model
 
 
+def load_material_library(material_library_path):
+    regex = r"^(?!Dots Stroke).*$"
+    objs = bproc.loader.load_blend(
+        material_library_path, name_regrex=regex, data_blocks="materials"
+    )
+    materials = bproc.material.collect_all()
+    return materials
+
+
 def render_scenes_from_configs(
     fixed_conf,
     sampling_conf,
+    material_library_path,
     seed,
     scene_num_samples,
     output_dir,
@@ -123,6 +133,7 @@ def render_scenes_from_configs(
     light, light_position, light_energy = create_light_from_config(fixed_conf, sampling_conf)
 
     model = load_model(fixed_conf, sampling_conf)
+    materials = load_material_library(material_library_path)
 
     for i, (scm_outcomes, scm_noise_values, scene) in enumerate(
         model.sample_and_populate_scene(
