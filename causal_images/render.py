@@ -3,6 +3,7 @@ import json
 import blenderproc as bproc
 import bpy
 import numpy as np
+from blenderproc.python.utility.CollisionUtility import CollisionUtility
 
 from causal_images.camera import sample_object_facing_camera_pose
 from causal_images.scm import SceneInterventions, SceneManipulations, SceneSCM
@@ -106,6 +107,16 @@ def load_material_library(material_library_path):
     return materials
 
 
+def check_for_collision(objects):
+    collision_detected = False
+    for first_obj_index, first_obj in enumerate(objects):
+        for second_obj in objects[first_obj_index + 1 :]:
+            objects_collide, _ = CollisionUtility.check_mesh_intersection(first_obj, second_obj)
+            if objects_collide:
+                collision_detected = True
+    return collision_detected
+
+
 def render_scenes_from_configs(
     fixed_conf,
     sampling_conf,
@@ -114,6 +125,7 @@ def render_scenes_from_configs(
     scene_num_samples,
     output_dir,
     run_names=None,
+    allow_collisions=False,
 ):
     if fixed_conf is None and sampling_conf is None:
         raise ValueError("Either fixed_conf or sampling_conf must be specified.")
@@ -135,14 +147,23 @@ def render_scenes_from_configs(
     model = load_model(fixed_conf, sampling_conf)
     materials = load_material_library(material_library_path)
 
-    for i, (scm_outcomes, scm_noise_values, scene) in enumerate(
-        model.sample_and_populate_scene(
-            scene_num_samples,
-            rng=rng,
-        )
-    ):
+    num_rendered_scenes = 0
+
+    scene_generator = model.sample_and_populate_scene(-1, rng=rng)
+
+    while num_rendered_scenes < scene_num_samples:
+        i = num_rendered_scenes
+        scm_outcomes, scm_noise_values, scene = next(scene_generator)
+
         objects = [obj.mesh for obj in scene.objects.values()]
         camera_poses = create_camera_poses(fixed_conf, sampling_conf, objects)
+
+        if not allow_collisions:
+            collision_detected = check_for_collision(objects)
+            if collision_detected:
+                print("Collision detected. Skipping scene.")
+                continue
+
         data = bproc.renderer.render()
 
         scene_result["scm_outcomes"] = scm_outcomes
@@ -161,6 +182,12 @@ def render_scenes_from_configs(
             img_data=data,
             scene_result=scene_result,
         )
+
+        num_rendered_scenes += 1
+
+    # Clean up last scene (TODO: Use context manager)
+    scene.cleanup()
+
     save_run_config(
         output_dir=output_dir,
         model=model,

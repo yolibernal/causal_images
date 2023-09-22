@@ -57,7 +57,9 @@ class SceneSCM:
         if fixed_noise_values is None:
             fixed_noise_values = self.fixed_noise_values
 
-        for i in range(n):
+        # for i in range(n):
+        num_sampled = 0
+        while num_sampled < n or n == -1:
             bproc.utility.reset_keyframes()
 
             # Create new scene
@@ -98,6 +100,8 @@ class SceneSCM:
             yield scm_outcomes, scm_noise_values, scene
 
             scene.cleanup()
+
+            num_sampled += 1
 
     def plot(self, rng=np.random.default_rng()):
         # Create new scene
