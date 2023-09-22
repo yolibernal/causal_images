@@ -35,7 +35,7 @@ class Scene:
     def __init__(self):
         self.objects: Dict[str, ObjectInfo] = {}
 
-    def create_primitive(self, shape, material_name=None):
+    def create_primitive(self, shape, material_name=None, scale=None):
         obj_id = uuid()
         obj = bproc.object.create_primitive(shape.value)
         if material_name is not None:
@@ -43,6 +43,8 @@ class Scene:
             material = bproc.filter.one_by_attr(materials, "name", material_name)
             obj.add_material(material)
 
+        if scale is not None:
+            obj.set_scale(scale)
         self.objects[obj_id] = ObjectInfo(mesh=obj, shape=shape)
         return obj_id
 
