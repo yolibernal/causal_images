@@ -191,10 +191,11 @@ def export(input_dir, output_dir, to_image, image_format: str):
 @click.option("--output_dir", help="Output directory", required=True)
 @click.option("--interventions_dir", help="Interventions directory", required=True)
 @click.option("--material_library_path", help="Path to .blend file containing materials")
+@click.option("--num_samples", default=5, type=int, help="Number of sampled scenes")
 @click.option(
-    "--num_samples_per_intervention",
-    default=[5],
-    type=int,
+    "--intervention_probabilities",
+    default=[-1],
+    type=float,
     multiple=True,
     help="Number of sampled scenes per intervention",
 )
@@ -218,33 +219,44 @@ def sample_weakly_supervised(
     output_dir,
     interventions_dir,
     material_library_path,
-    num_samples_per_intervention,
+    num_samples,
+    intervention_probabilities,
     seed,
     output_image_dir,
     to_image,
     image_format: str,
 ):
     print("Sampling original and counterfactual scenes...")
-    interventions_paths = [
+    intervention_paths = [
         os.path.join(interventions_dir, f)
         for f in os.listdir(interventions_dir)
         if f.endswith(".py")
     ]
+    intervention_paths = sorted(intervention_paths, key=lambda x: os.path.basename(x))
+    EMPTY_INTERVENTION = "_empty_intervention"
+    intervention_paths_with_empty = [EMPTY_INTERVENTION] + intervention_paths
 
-    if (
-        len(num_samples_per_intervention) != len(interventions_paths)
-        and len(num_samples_per_intervention) != 1
-    ):
+    if len(intervention_probabilities) != len(
+        intervention_paths_with_empty
+    ) and intervention_probabilities != (-1,):
         raise ValueError(
-            "Length of number of samples per intervention must be either 1 or equal to the number of interventions."
+            f"Number of intervention probabilities must match number of interventions or be (-1,) for uniform."
         )
 
-    if len(num_samples_per_intervention) == 1:
-        num_samples_per_intervention = num_samples_per_intervention * len(interventions_paths)
+    if intervention_probabilities == (-1,):
+        intervention_probabilities = [1 / len(intervention_paths_with_empty)] * len(
+            intervention_paths_with_empty
+        )
 
-    EMPTY_INTERVENTION = "_empty_intervention"
-    print("Interventions paths:", interventions_paths)
-    for i, interventions_path in enumerate(interventions_paths + [EMPTY_INTERVENTION]):
+    # Sample number of scenes per intervention
+    num_samples_per_intervention = np.random.multinomial(
+        num_samples, intervention_probabilities
+    ).tolist()
+
+    print("Interventions paths:", intervention_paths)
+    for interventions_path, intervention_num_samples in zip(
+        intervention_paths_with_empty, num_samples_per_intervention
+    ):
         print("Sampling for interventions path:", interventions_path)
         intervention_name = (
             os.path.basename(interventions_path).replace(".py", "")
@@ -268,7 +280,7 @@ def sample_weakly_supervised(
             material_library_path=material_library_path,
             seed=seed,
             output_dir=original_output_dir,
-            scene_num_samples=num_samples_per_intervention[i],
+            scene_num_samples=intervention_num_samples,
         )
         if intervention_name != EMPTY_INTERVENTION:
             ctx.invoke(
