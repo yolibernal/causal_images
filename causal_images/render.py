@@ -108,13 +108,12 @@ def load_material_library(material_library_path):
 
 
 def check_for_collision(objects):
-    collision_detected = False
     for first_obj_index, first_obj in enumerate(objects):
         for second_obj in objects[first_obj_index + 1 :]:
             objects_collide, _ = CollisionUtility.check_mesh_intersection(first_obj, second_obj)
-            if objects_collide:
-                collision_detected = True
-    return collision_detected
+            if objects_collide == True:
+                return True
+    return False
 
 
 def render_scenes_from_configs(
@@ -126,6 +125,8 @@ def render_scenes_from_configs(
     output_dir,
     run_names=None,
     allow_collisions=False,
+    clean_every_n_scenes=500,
+    enable_transparency=True,
 ):
     if fixed_conf is None and sampling_conf is None:
         raise ValueError("Either fixed_conf or sampling_conf must be specified.")
@@ -145,13 +146,25 @@ def render_scenes_from_configs(
     light, light_position, light_energy = create_light_from_config(fixed_conf, sampling_conf)
 
     model = load_model(fixed_conf, sampling_conf)
-    materials = load_material_library(material_library_path)
+
+    load_materials = material_library_path is not None and material_library_path != ""
+    materials = None
+    if load_materials:
+        materials = load_material_library(material_library_path)
 
     num_rendered_scenes = 0
 
     scene_generator = model.sample_and_populate_scene(-1, rng=rng)
 
+    bproc.renderer.set_output_format(enable_transparency=enable_transparency)
+
+    # bproc.world.set_world_background_hdr_img("alps_field_1k.hdr")
+
     while num_rendered_scenes < scene_num_samples:
+        # if num_rendered_scenes % clean_every_n_scenes == 0:
+        #     bproc.clean_up()
+        #     if load_materials:
+        #         materials = load_material_library(material_library_path)
         i = num_rendered_scenes
         scm_outcomes, scm_noise_values, scene = next(scene_generator)
 

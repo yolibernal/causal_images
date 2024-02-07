@@ -12,6 +12,9 @@ import click
 from causal_images.render import render_scenes_from_configs
 from causal_images.util import hdf5_to_image
 
+ALLOW_COLLISIONS = True
+ENABLE_TRANSPARENCY = True
+
 
 @click.group()
 def cli():
@@ -68,6 +71,8 @@ def sample(
                 scene_num_samples=current_batch_size,
                 output_dir=output_dir,
                 run_names=range(i * batch_size, (i + 1) * batch_size),
+                allow_collisions=ALLOW_COLLISIONS,
+                enable_transparency=ENABLE_TRANSPARENCY,
             )
             bproc.clean_up()
 
@@ -79,6 +84,8 @@ def sample(
             seed=seed,
             scene_num_samples=scene_num_samples,
             output_dir=output_dir,
+            allow_collisions=ALLOW_COLLISIONS,
+            enable_transparency=ENABLE_TRANSPARENCY,
         )
         bproc.clean_up()
 
@@ -133,6 +140,8 @@ def counterfactual(input_dir, output_dir, material_library_path, interventions_p
             seed=run_seed,
             scene_num_samples=1,
             output_dir=os.path.join(output_dir, run_dir),
+            allow_collisions=ALLOW_COLLISIONS,
+            enable_transparency=ENABLE_TRANSPARENCY,
         )
 
 

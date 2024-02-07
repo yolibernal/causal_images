@@ -6,6 +6,7 @@ import shutil
 import sys
 
 import blenderproc as bproc
+import bpy
 import dill as pickle
 import h5py
 import numpy as np
@@ -97,5 +98,6 @@ def save_run_outputs(
 def hdf5_to_image(input_path):
     hdf = h5py.File(input_path, "r")
     colors = np.array(hdf["colors"])
-    img = Image.fromarray(colors.astype("uint8"), "RGB")
+    color_mode = bpy.context.scene.render.image_settings.color_mode
+    img = Image.fromarray(colors.astype("uint8"), color_mode)
     return img
