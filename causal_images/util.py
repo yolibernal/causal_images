@@ -89,7 +89,8 @@ def save_run_outputs(
     run_dir = os.path.join(output_dir, str(run_name))
 
     # Save rendered image
-    bproc.writer.write_hdf5(run_dir, img_data)
+    if img_data is not None:
+        bproc.writer.write_hdf5(run_dir, img_data)
 
     with open(os.path.join(run_dir, "scene_result.json"), "w") as f:
         json.dump(scene_result, f, cls=NumpyEncoder)

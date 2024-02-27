@@ -128,7 +128,7 @@ class SceneSCM:
             return ([], lambda: node_value, None)
 
     def _resolve_scene_object_ids(self, scene_outcomes: Dict, scene):
-        """Resolve the object ID to the actual object."""
+        """Resolve the object ID to the actual object name."""
         resolved_scene_outcomes = {}
         for node_name, node_value in scene_outcomes.items():
             if node_name.startswith("obj_"):
