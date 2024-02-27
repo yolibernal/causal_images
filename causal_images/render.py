@@ -74,8 +74,10 @@ def load_model(fixed_conf, sampling_conf):
     if "scm_noise_values" in fixed_conf:
         fixed_noise_values = fixed_conf["scm_noise_values"]
 
+    # Render scenes from fixed SCM outcomes
     if "scm_outcomes" in fixed_conf:
         model = SceneSCM.from_scm_outcomes(fixed_conf["scm_outcomes"])
+    # Sample scenes from SCM
     elif "scm" in sampling_conf:
         scm_conf = sampling_conf["scm"]
 
@@ -125,8 +127,8 @@ def render_scenes_from_configs(
     output_dir,
     run_names=None,
     allow_collisions=False,
-    clean_every_n_scenes=500,
     enable_transparency=True,
+    skip_render=False,
 ):
     if fixed_conf is None and sampling_conf is None:
         raise ValueError("Either fixed_conf or sampling_conf must be specified.")
@@ -154,7 +156,7 @@ def render_scenes_from_configs(
 
     num_rendered_scenes = 0
 
-    scene_generator = model.sample_and_populate_scene(-1, rng=rng)
+    scene_generator = model.sample_and_populate_scene(n=-1, rng=rng)
 
     bproc.renderer.set_output_format(enable_transparency=enable_transparency)
 
@@ -177,8 +179,6 @@ def render_scenes_from_configs(
                 print("Collision detected. Skipping scene.")
                 continue
 
-        data = bproc.renderer.render()
-
         scene_result["scm_outcomes"] = scm_outcomes
         scene_result["scm_noise_values"] = scm_noise_values
         scene_result["camera"] = {
@@ -189,6 +189,13 @@ def render_scenes_from_configs(
             "position": light_position,
             "energy": light_energy,
         }
+
+        if skip_render:
+            data = None
+            scene.cleanup()
+        else:
+            data = bproc.renderer.render()
+
         save_run_outputs(
             output_dir=output_dir,
             run_name=run_names[i] if run_names is not None else i,
