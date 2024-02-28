@@ -3,7 +3,7 @@
 set -e
 
 CONF_DIR="configs/2dcubes_grayscale_shapes_equi_child_noise"
-EXP_NAME="sequence_2dcubes_grayscale_shapes_equi_child_noise"
+EXP_NAME="sequence_2dcubes_grayscale_shapes_equi_child_noise_test_skip"
 INTERVENTIONS_DIR="same_mechanism"
 # MATERIAL_LIBRARY_PATH="./scenes/scene.blend"
 MATERIAL_LIBRARY_PATH=''
@@ -15,6 +15,8 @@ TAGS=( "train" "test" "val" "dci_train" )
 NUM_SAMPLES_PER_TAG=( 5000 500 500 500 )
 # NUM_SAMPLES_PER_TAG=( 10000 1000 1000 1000 )
 # NUM_SAMPLES_PER_TAG=( 30 30 30 30 )
+
+# SKIP_RENDER=false
 
 SEQUENCE_LENGTH=4
 
@@ -72,7 +74,10 @@ for i in "${!TAGS[@]}"; do
         command="${command} --intervention_probabilities ${INTERVENTION_PROBABILITIES[$j]}"
       done
 
-
+      # skip rendering
+      if [ "$SKIP_RENDER" = true ]; then
+          command="${command} --skip_render"
+      fi
 
       if [ -n "${MATERIAL_LIBRARY_PATH}" ]; then
           command="${command} --material_library_path ${MATERIAL_LIBRARY_PATH}"

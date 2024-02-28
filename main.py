@@ -29,6 +29,7 @@ def cli():
 @click.option("--output_dir", help="Output directory", required=True)
 @click.option("--seed", help="Seed for initializing random generator.", type=int)
 @click.option("--scene_num_samples", default=5, type=int, help="Number of sampled scenes")
+@click.option("--skip_render", help="Skip rendering", is_flag=True)
 def sample(
     fixed_config_path,
     sampling_config_path,
@@ -37,6 +38,7 @@ def sample(
     seed,
     scene_num_samples,
     batch_size=200,
+    skip_render=False,
 ):
     fixed_conf = None
     if fixed_config_path is not None:
@@ -74,6 +76,7 @@ def sample(
                 run_names=range(i * batch_size, (i + 1) * batch_size),
                 allow_collisions=ALLOW_COLLISIONS,
                 enable_transparency=ENABLE_TRANSPARENCY,
+                skip_render=skip_render,
             )
             bproc.clean_up()
 
@@ -106,6 +109,7 @@ def interpolate_dict_values(dict1, dict2, alpha, interpolation="linear"):
 @click.option("--interventions_path", help="Interventions file", required=True)
 @click.option("--seed", help="Seed for initializing random generator.", type=int)
 @click.option("--sequence_length", help="Sequence length", type=int, default=1)
+@click.option("--skip_render", help="Skip rendering", is_flag=True)
 def counterfactual(
     input_dir,
     output_dir,
@@ -114,6 +118,7 @@ def counterfactual(
     interventions_path,
     seed,
     sequence_length: int = 1,
+    skip_render=False,
 ):
     # Load the scm
     scm_paths = [
@@ -165,6 +170,7 @@ def counterfactual(
             output_dir=os.path.join(output_dir, run_dir),
             allow_collisions=ALLOW_COLLISIONS,
             enable_transparency=ENABLE_TRANSPARENCY,
+            skip_render=skip_render,
         )
 
         if sequence_length > 1:
@@ -205,6 +211,7 @@ def counterfactual(
                     output_dir=os.path.join(sequence_output_dir, run_dir),
                     allow_collisions=ALLOW_COLLISIONS,
                     enable_transparency=ENABLE_TRANSPARENCY,
+                    skip_render=skip_render,
                 )
 
 
@@ -214,7 +221,8 @@ def counterfactual(
 @click.option("--to_image", help="Convert hdf5 to image", is_flag=True)
 @click.option("--sequence_length", help="Sequence length", type=int, default=1)
 @click.option("--image_format", help="Image format", default="JPEG")
-def export(input_dir, output_dir, to_image, sequence_length, image_format: str):
+@click.option("--skip_image", help="Skip rendering", is_flag=True)
+def export(input_dir, output_dir, to_image, sequence_length, image_format: str, skip_image=False):
     file_index = 0
 
     output_data_dir = os.path.join(output_dir, "data")
@@ -226,22 +234,28 @@ def export(input_dir, output_dir, to_image, sequence_length, image_format: str):
 
     for subdir, dirs, files in os.walk(input_dir):
         for file in files:
-            filepath = os.path.join(subdir, file)
-            if filepath.endswith(".hdf5"):
-                dir_path = os.path.dirname(filepath)
+            resultspath = os.path.join(subdir, file)
+            if resultspath.endswith("scene_result.json"):
+                dir_path = os.path.dirname(resultspath)
+
+                filepath = os.path.join(dir_path, "0.hdf5")
 
                 if sequence_length > 1:
                     # Use parent directory as sequence index
                     filename = f"{file_index // sequence_length}_{dir_path.split(os.path.sep)[-1]}"
                 else:
                     filename = f"{file_index}"
-
                 scene_result_path = os.path.join(dir_path, "scene_result.json")
-                if to_image:
-                    img = hdf5_to_image(filepath)
-                    img.save(os.path.join(output_data_dir, f"{filename}.{image_format.lower()}"))
-                else:
-                    shutil.copy(filepath, os.path.join(output_data_dir, f"{filename}.hdf5"))
+
+                if not skip_image:
+                    if to_image:
+                        img = hdf5_to_image(filepath)
+                        img.save(
+                            os.path.join(output_data_dir, f"{filename}.{image_format.lower()}")
+                        )
+                    else:
+                        shutil.copy(filepath, os.path.join(output_data_dir, f"{filename}.hdf5"))
+
                 with open(scene_result_path) as f:
                     scene_result = json.load(f)
 
@@ -283,6 +297,7 @@ def export(input_dir, output_dir, to_image, sequence_length, image_format: str):
     is_flag=True,
 )
 @click.option("--image_format", help="Image format", default="JPEG")
+@click.option("--skip_render", help="Skip rendering", is_flag=True)
 @click.pass_context
 def sample_weakly_supervised(
     ctx,
@@ -298,6 +313,7 @@ def sample_weakly_supervised(
     to_image,
     sequence_length: int,
     image_format: str,
+    skip_render=False,
 ):
     print("Sampling original and counterfactual scenes...")
     intervention_paths = [
@@ -364,6 +380,7 @@ def sample_weakly_supervised(
             seed=seed,
             output_dir=original_output_dir,
             scene_num_samples=intervention_num_samples,
+            skip_render=skip_render,
         )
 
         # If empty intervention, we don't need counterfactual and can use the original scenes instead
@@ -378,6 +395,7 @@ def sample_weakly_supervised(
                 interventions_path=interventions_path,
                 sequence_length=sequence_length,
                 seed=seed,
+                skip_render=skip_render,
             )
         if to_image:
             # Create image directories
@@ -397,6 +415,7 @@ def sample_weakly_supervised(
                 output_dir=original_image_dir,
                 to_image=True,
                 image_format=image_format,
+                skip_image=skip_render,
             )
             # export counterfactuals
             ctx.invoke(
@@ -410,6 +429,7 @@ def sample_weakly_supervised(
                 output_dir=counterfactual_image_dir,
                 to_image=True,
                 image_format=image_format,
+                skip_image=skip_render,
             )
 
             # export sequences
@@ -424,6 +444,7 @@ def sample_weakly_supervised(
                     to_image=True,
                     sequence_length=sequence_length,
                     image_format=image_format,
+                    skip_image=skip_render,
                 )
 
             # if empty intervention, copy original image sequence_length times
@@ -432,28 +453,34 @@ def sample_weakly_supervised(
                     for j in range(sequence_length):
                         # Get a list of all image files in the original_image_dir
                         image_files = glob.glob(os.path.join(original_image_dir, "data", f"{i}.*"))
-                        assert len(image_files) > 0, f"No images found in {original_image_dir}"
 
                         label_files = glob.glob(
                             os.path.join(original_image_dir, "labels", f"{i}.*")
                         )
 
                         # Iterate over each image file and copy it to the sequence_image_dir
-                        for image_file in image_files:
-                            # Extract the file extension
-                            _, extension = os.path.splitext(image_file)
+                        if not skip_render:
+                            for image_file in image_files:
+                                assert (
+                                    len(image_files) > 0
+                                ), f"No images found in {original_image_dir}"
+                                # Extract the file extension
+                                _, extension = os.path.splitext(image_file)
 
-                            # Define the new filename in the sequence_image_dir
-                            new_filename = (
-                                f"{i}_{j}{extension}" if sequence_length > 1 else f"{i}{extension}"
-                            )
+                                # Define the new filename in the sequence_image_dir
+                                new_filename = (
+                                    f"{i}_{j}{extension}"
+                                    if sequence_length > 1
+                                    else f"{i}{extension}"
+                                )
 
-                            # Copy the image file to the sequence_image_dir
-                            shutil.copy(
-                                image_file,
-                                os.path.join(sequence_image_dir, "data", new_filename),
-                            )
+                                # Copy the image file to the sequence_image_dir
+                                shutil.copy(
+                                    image_file,
+                                    os.path.join(sequence_image_dir, "data", new_filename),
+                                )
                         for label_file in label_files:
+                            assert len(label_files) > 0, f"No labels found in {original_image_dir}"
                             # Extract the file extension
                             _, extension = os.path.splitext(label_file)
 

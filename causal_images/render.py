@@ -192,7 +192,8 @@ def render_scenes_from_configs(
 
         if skip_render:
             data = None
-            scene.cleanup()
+            # Cleaning scene leads to crash due to Blender bug (executing unreachable Blender code)
+            # scene.cleanup()
         else:
             data = bproc.renderer.render()
 

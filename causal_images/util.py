@@ -88,6 +88,8 @@ def save_run_outputs(
 ):
     run_dir = os.path.join(output_dir, str(run_name))
 
+    os.makedirs(run_dir, exist_ok=True)
+
     # Save rendered image
     if img_data is not None:
         bproc.writer.write_hdf5(run_dir, img_data)
