@@ -95,8 +95,16 @@ def sample(
 
 
 def interpolate_dict_values(dict1, dict2, alpha, interpolation="linear"):
+    # handle non-numeric values
+    numeric_keys = [k for k in dict1 if isinstance(dict1[k], (int, float))]
+    non_numeric_keys = [k for k in dict1 if k not in numeric_keys]
+
     if interpolation == "linear":
-        return {k: [(1 - alpha) * dict1[k][0] + alpha * dict2[k][0]] for k in dict1}
+        numeric_dict = {
+            k: (1 - alpha) * dict1[k] + alpha * dict2[k] for k in dict1 if k in numeric_keys
+        }
+        non_numeric_dict = {k: dict1[k] for k in dict1 if k in non_numeric_keys}
+        return {**numeric_dict, **non_numeric_dict}
     else:
         raise ValueError(f"Interpolation method {interpolation} not supported.")
 
@@ -119,6 +127,7 @@ def counterfactual(
     seed,
     sequence_length: int = 1,
     skip_render=False,
+    computed_values_path=None,
 ):
     # Load the scm
     scm_paths = [
@@ -139,7 +148,7 @@ def counterfactual(
             "scm_path": scm_path,
             "interventions_path": interventions_path,
             "manipulations_path": None,
-        }
+        },
     }
     excluded_dirs = ["__pycache__"]
     run_directories = next(os.walk(input_dir))[1]
@@ -160,6 +169,10 @@ def counterfactual(
         fixed_conf_counterfactual = {
             k: v for k, v in scene_result.items() if k not in ["scm_outcomes"]
         }
+
+        # Add computed values path also for counterfactuals
+        fixed_conf_counterfactual["computed_values_path"] = computed_values_path
+
         run_seed = rng.integers(0, 2**32 - 1)
         render_scenes_from_configs(
             fixed_conf=fixed_conf_counterfactual,
@@ -175,13 +188,7 @@ def counterfactual(
 
         if sequence_length > 1:
             fixed_conf_sequence = fixed_conf_counterfactual.copy()
-            sampling_conf_sequence = {
-                "scm": {
-                    "scm_path": scm_path,
-                    "interventions_path": None,
-                    "manipulations_path": None,
-                }
-            }
+            sampling_conf_sequence = None
             if sequence_output_dir is None:
                 raise ValueError(
                     "Sequence output directory must be specified for sequence rendering."
@@ -193,14 +200,15 @@ def counterfactual(
                 scene_result_counterfactual = json.load(f)
 
             # interpolate between original and counterfactual noise values
-            noise_values = scene_result["scm_noise_values"]
-            noise_values_counterfactual = scene_result_counterfactual["scm_noise_values"]
+            scm_outcomes = scene_result["scm_outcomes"]
+            scm_outcomes_counterfactual = scene_result_counterfactual["scm_outcomes"]
+
             alphas = np.linspace(0, 1, sequence_length + 1)[1:]
             for i in range(sequence_length):
-                interpolated_noise_values = interpolate_dict_values(
-                    noise_values, noise_values_counterfactual, alphas[i], interpolation="linear"
+                interpolated_scm_outcomes = interpolate_dict_values(
+                    scm_outcomes, scm_outcomes_counterfactual, alphas[i], interpolation="linear"
                 )
-                fixed_conf_sequence["scm_noise_values"] = interpolated_noise_values
+                fixed_conf_sequence["scm_outcomes"] = interpolated_scm_outcomes
                 render_scenes_from_configs(
                     fixed_conf=fixed_conf_sequence,
                     sampling_conf=sampling_conf_sequence,
@@ -265,6 +273,11 @@ def export(input_dir, output_dir, to_image, sequence_length, image_format: str, 
                     for k, v in scene_result.items()
                     if k in ["scm_outcomes", "scm_noise_values"]
                 }
+                if "noise_encodings" in scene_result:
+                    label["noise_encodings"] = scene_result["noise_encodings"]
+                else:
+                    print("WARNING: noise_encodings not found in scene_result.json")
+
                 with open(os.path.join(output_labels_dir, f"{filename}.json"), "w") as f:
                     json.dump(label, f)
                 file_index += 1
@@ -315,6 +328,10 @@ def sample_weakly_supervised(
     image_format: str,
     skip_render=False,
 ):
+    with open(fixed_config_path) as f:
+        fixed_conf = json.load(f)
+    computed_values_path = fixed_conf.get("computed_values_path", None)
+
     print("Sampling original and counterfactual scenes...")
     intervention_paths = [
         os.path.join(interventions_dir, f)
@@ -390,12 +407,13 @@ def sample_weakly_supervised(
                 counterfactual,
                 input_dir=original_output_dir,
                 output_dir=counterfactual_output_dir,
-                sequence_output_dir=sequence_output_dir,
+                sequence_output_dir=None if sequence_length <= 1 else sequence_output_dir,
                 material_library_path=material_library_path,
                 interventions_path=interventions_path,
                 sequence_length=sequence_length,
                 seed=seed,
                 skip_render=skip_render,
+                computed_values_path=computed_values_path,
             )
         if to_image:
             # Create image directories
@@ -447,25 +465,46 @@ def sample_weakly_supervised(
                     skip_image=skip_render,
                 )
 
-            # if empty intervention, copy original image sequence_length times
-            if intervention_name == EMPTY_INTERVENTION:
-                for i in range(intervention_num_samples):
-                    for j in range(sequence_length):
-                        # Get a list of all image files in the original_image_dir
-                        image_files = glob.glob(os.path.join(original_image_dir, "data", f"{i}.*"))
+                # if empty intervention, copy original image sequence_length times
+                if intervention_name == EMPTY_INTERVENTION:
+                    for i in range(intervention_num_samples):
+                        for j in range(sequence_length):
+                            # Get a list of all image files in the original_image_dir
+                            image_files = glob.glob(
+                                os.path.join(original_image_dir, "data", f"{i}.*")
+                            )
 
-                        label_files = glob.glob(
-                            os.path.join(original_image_dir, "labels", f"{i}.*")
-                        )
+                            label_files = glob.glob(
+                                os.path.join(original_image_dir, "labels", f"{i}.*")
+                            )
 
-                        # Iterate over each image file and copy it to the sequence_image_dir
-                        if not skip_render:
-                            for image_file in image_files:
+                            # Iterate over each image file and copy it to the sequence_image_dir
+                            if not skip_render:
+                                for image_file in image_files:
+                                    assert (
+                                        len(image_files) > 0
+                                    ), f"No images found in {original_image_dir}"
+                                    # Extract the file extension
+                                    _, extension = os.path.splitext(image_file)
+
+                                    # Define the new filename in the sequence_image_dir
+                                    new_filename = (
+                                        f"{i}_{j}{extension}"
+                                        if sequence_length > 1
+                                        else f"{i}{extension}"
+                                    )
+
+                                    # Copy the image file to the sequence_image_dir
+                                    shutil.copy(
+                                        image_file,
+                                        os.path.join(sequence_image_dir, "data", new_filename),
+                                    )
+                            for label_file in label_files:
                                 assert (
-                                    len(image_files) > 0
-                                ), f"No images found in {original_image_dir}"
+                                    len(label_files) > 0
+                                ), f"No labels found in {original_image_dir}"
                                 # Extract the file extension
-                                _, extension = os.path.splitext(image_file)
+                                _, extension = os.path.splitext(label_file)
 
                                 # Define the new filename in the sequence_image_dir
                                 new_filename = (
@@ -476,24 +515,9 @@ def sample_weakly_supervised(
 
                                 # Copy the image file to the sequence_image_dir
                                 shutil.copy(
-                                    image_file,
-                                    os.path.join(sequence_image_dir, "data", new_filename),
+                                    label_file,
+                                    os.path.join(sequence_image_dir, "labels", new_filename),
                                 )
-                        for label_file in label_files:
-                            assert len(label_files) > 0, f"No labels found in {original_image_dir}"
-                            # Extract the file extension
-                            _, extension = os.path.splitext(label_file)
-
-                            # Define the new filename in the sequence_image_dir
-                            new_filename = (
-                                f"{i}_{j}{extension}" if sequence_length > 1 else f"{i}{extension}"
-                            )
-
-                            # Copy the image file to the sequence_image_dir
-                            shutil.copy(
-                                label_file,
-                                os.path.join(sequence_image_dir, "labels", new_filename),
-                            )
 
 
 if __name__ == "__main__":

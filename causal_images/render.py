@@ -100,6 +100,17 @@ def load_model(fixed_conf, sampling_conf):
     return model
 
 
+def load_computed_values(fixed_conf):
+    computed_values = None
+    if "computed_values_path" in fixed_conf:
+        # load module
+        computed_values = load_module_from_file(
+            fixed_conf["computed_values_path"], "computed_values"
+        )
+        computed_values: dict[str, callable] = computed_values.computed_values
+    return computed_values
+
+
 def load_material_library(material_library_path):
     regex = r"^(?!Dots Stroke).*$"
     objs = bproc.loader.load_blend(
@@ -148,6 +159,7 @@ def render_scenes_from_configs(
     light, light_position, light_energy = create_light_from_config(fixed_conf, sampling_conf)
 
     model = load_model(fixed_conf, sampling_conf)
+    computed_values = load_computed_values(fixed_conf)
 
     load_materials = material_library_path is not None and material_library_path != ""
     materials = None
@@ -189,6 +201,11 @@ def render_scenes_from_configs(
             "position": light_position,
             "energy": light_energy,
         }
+
+        if computed_values is not None:
+            scene_result.update(
+                {key: value(scene_result) for key, value in computed_values.items()}
+            )
 
         if skip_render:
             data = None

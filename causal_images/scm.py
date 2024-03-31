@@ -119,11 +119,23 @@ class SceneSCM:
                 None,
             )
         elif node_name.startswith("pos_"):
-            return (
-                [node_name.replace("pos_", "obj_")],
-                lambda obj_parent: scene.set_object_position(obj_parent, node_value),
-                None,
-            )
+            if node_name.startswith("pos_x"):
+                return (
+                    [node_name.replace("pos_x", "obj_")],
+                    lambda obj_parent: scene.set_object_position(obj_parent, [0, node_value, None])[
+                        1
+                    ],
+                    None,
+                )
+            if node_name.startswith("pos_y"):
+                return (
+                    [node_name.replace("pos_y", "obj_")],
+                    lambda obj_parent: scene.set_object_position(obj_parent, [0, None, node_value])[
+                        2
+                    ],
+                    None,
+                )
+
         else:
             return ([], lambda: node_value, None)
 
