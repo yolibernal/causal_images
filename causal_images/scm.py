@@ -113,25 +113,48 @@ class SceneSCM:
     def _create_deterministic_node_callable(self, scene, node_name: str, node_value):
         """Create a callable that returns a constant node value."""
         if node_name.startswith("obj_"):
+            # HACKFIX: add color
+            if node_name.endswith("1"):
+                color = "Red"
+            elif node_name.endswith("2"):
+                color = "Green"
+            elif node_name.endswith("3"):
+                color = "Blue"
+            else:
+                color = None
             return (
                 [],
-                lambda: scene.create_primitive(PrimitiveShape(node_value)),
+                lambda: scene.create_primitive(PrimitiveShape(node_value), material_name=color),
                 None,
             )
         elif node_name.startswith("pos_"):
             if node_name.startswith("pos_x"):
+                # return (
+                #     [node_name.replace("pos_x", "obj_")],
+                #     lambda obj_parent: scene.set_object_position(obj_parent, [0, node_value, None])[
+                #         1
+                #     ],
+                #     None,
+                # )
                 return (
                     [node_name.replace("pos_x", "obj_")],
-                    lambda obj_parent: scene.set_object_position(obj_parent, [0, node_value, None])[
-                        1
+                    lambda obj_parent: scene.set_object_position(obj_parent, [node_value, None, 0])[
+                        0
                     ],
                     None,
                 )
             if node_name.startswith("pos_y"):
+                # return (
+                #     [node_name.replace("pos_y", "obj_")],
+                #     lambda obj_parent: scene.set_object_position(obj_parent, [0, None, node_value])[
+                #         2
+                #     ],
+                #     None,
+                # )
                 return (
                     [node_name.replace("pos_y", "obj_")],
-                    lambda obj_parent: scene.set_object_position(obj_parent, [0, None, node_value])[
-                        2
+                    lambda obj_parent: scene.set_object_position(obj_parent, [None, node_value, 0])[
+                        1
                     ],
                     None,
                 )
