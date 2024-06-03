@@ -16,7 +16,7 @@ Generate counterfactuals from previous output:
 
 Export output as data/labels:
 
-`blenderproc run main.py export --input_dir outputs/basic --output_dir outputs/basic_export --to-image`
+`blenderproc run main.py export --input_dir outputs/basic --output_dir outputs/basic_export --to_image`
 
 ### Visualize
 
