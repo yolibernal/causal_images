@@ -193,8 +193,9 @@ def render_scenes_from_configs(
 
         scene_result["scm_outcomes"] = scm_outcomes
         scene_result["scm_noise_values"] = scm_noise_values
+        if "camera" in fixed_conf:
+            scene_result["camera"] = fixed_conf["camera"]
         scene_result["camera"] = {
-            **fixed_conf["camera"],
             "poses": camera_poses.tolist(),
         }
         scene_result["light"] = {
