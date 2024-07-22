@@ -2,6 +2,12 @@
 
 Using [BlenderProc](https://github.com/DLR-RM/BlenderProc) to create training images from a Structural Causal Model (SCM).
 
+## Setup
+
+The package must be installed into Blender's addons, for example with
+
+`pip install . -t ./Blender/3.3/scripts/addons/`
+
 ## Example
 
 ### Run
