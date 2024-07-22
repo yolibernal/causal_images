@@ -1,0 +1,7 @@
+{
+  "scm": {
+    "scm_path": "./examples/2dcubes_grayscale_shapes_equi_child_noise/original/scm.py",
+    "interventions_path": null,
+    "manipulations_path": null
+  }
+}

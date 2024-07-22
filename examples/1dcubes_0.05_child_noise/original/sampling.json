@@ -1,0 +1,7 @@
+{
+  "scm": {
+    "scm_path": "./examples/1dcubes_0.05_child_noise/original/scm.py",
+    "interventions_path": null,
+    "manipulations_path": null
+  }
+}

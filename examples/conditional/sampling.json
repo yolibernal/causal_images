@@ -1,0 +1,7 @@
+{
+  "scm": {
+    "scm_path": "./examples/conditional/scm.py",
+    "interventions_path": null,
+    "manipulations_path": null
+  }
+}
