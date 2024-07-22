@@ -14,7 +14,7 @@ from causal_images.render import render_scenes_from_configs
 from causal_images.util import hdf5_to_image
 
 ALLOW_COLLISIONS = True
-ENABLE_TRANSPARENCY = True
+ENABLE_TRANSPARENCY = False
 
 
 @click.group()
@@ -112,7 +112,7 @@ def interpolate_dict_values(dict1, dict2, alpha, interpolation="linear"):
 @cli.command()
 @click.option("--input_dir", help="Input directory", required=True)
 @click.option("--output_dir", help="Output directory", required=True)
-@click.option("--sequence_output_dir", help="Sequence output directory", required=True)
+@click.option("--sequence_output_dir", help="Sequence output directory")
 @click.option("--material_library_path", help="Path to .blend file containing materials")
 @click.option("--interventions_path", help="Interventions file", required=True)
 @click.option("--seed", help="Seed for initializing random generator.", type=int)
@@ -171,7 +171,8 @@ def counterfactual(
         }
 
         # Add computed values path also for counterfactuals
-        fixed_conf_counterfactual["computed_values_path"] = computed_values_path
+        if computed_values_path is not None:
+            fixed_conf_counterfactual["computed_values_path"] = computed_values_path
 
         run_seed = rng.integers(0, 2**32 - 1)
         render_scenes_from_configs(
