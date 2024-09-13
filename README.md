@@ -24,6 +24,12 @@ Export output as data/labels:
 
 `blenderproc run main.py export --input_dir outputs/basic --output_dir outputs/basic_export --to_image`
 
+Original image
+![Original image](images/original.jpeg)
+
+Counterfactual  image
+![Counterfactual image](images/counterfactual.jpeg)
+
 ### Visualize
 
 Visualize a generated image:
